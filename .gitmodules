@@ -1,0 +1,3 @@
+[submodule "RGTools"]
+	path = RGTools
+	url = git@github.com:DignoMor/RGTools.git
