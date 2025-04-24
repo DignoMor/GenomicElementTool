@@ -6,6 +6,7 @@ from count_bw import CountBw
 from pad_region import PadRegion
 from bed2tss_bed import Bed2TssBed
 from one_hot import OneHot
+from motif_search import MotifSearch
 
 class GenomicElementTool:
     @staticmethod
@@ -38,6 +39,11 @@ class GenomicElementTool:
         
         OneHot.set_parser(parser_onehot)
 
+        parser_motif_search = subparsers.add_parser("motif_search",
+                                                  help="Search for motifs in sequences.",
+                                                  )
+        MotifSearch.set_parser(parser_motif_search)
+
     @staticmethod
     def main(args):
         if args.subcommand == "count_bw":
@@ -48,6 +54,8 @@ class GenomicElementTool:
             Bed2TssBed.main(args)
         elif args.subcommand == "onehot":
             OneHot.main(args)
+        elif args.subcommand == "motif_search":
+            MotifSearch.main(args)
         else:
             raise ValueError("Unknown subcommand: {}".format(args.subcommand))
 
