@@ -114,21 +114,24 @@ class MotifSearch:
             motif_pwm = motif_dataset.get_motif_pwm(motif)
             motif_alphabet = motif_dataset.get_alphabet()
 
-            # Add pseudo count to the PWM
-            total_counts = motif_dataset.get_motif_num_source_sites(motif) 
-            total_count_matrix = motif_pwm * total_counts
-            motif_pwm = (total_count_matrix + 1) / (total_counts + motif_pwm.shape[1])
-
             # Estimate background frequency
             if not args.estimate_background_freq:
                 bg_freq = motif_dataset.get_motif_bg_freq(motif)
                 bg_freq = np.array(bg_freq, dtype=np.float64)
             else:
                 full_str = "".join([s.upper() for s in seq_list])
+                if "N" in full_str:
+                    motif_alphabet += "N"
+                    motif_pwm = np.concatenate((motif_pwm, np.zeros((motif_pwm.shape[0], 1), dtype=np.float64)), axis=1)
                 bg_freq = np.array([int(np.char.count(full_str, a)) for a in motif_alphabet], 
                                    dtype=np.float64)
                 bg_freq /= np.sum(bg_freq)
 
+            # Add pseudo count to the PWM
+            total_counts = motif_dataset.get_motif_num_source_sites(motif) 
+            total_count_matrix = motif_pwm * total_counts
+            motif_pwm = (total_count_matrix + 1) / (total_counts + motif_pwm.shape[1])
+            
             output_score_anno_list = []
             for seq in seq_list:
                 motif_score_track = MotifSearch.search_one_motif(seq, motif_alphabet, motif_pwm)
