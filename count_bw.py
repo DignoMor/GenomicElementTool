@@ -72,6 +72,7 @@ class CountBw:
                                                             region["end"],
                                                             strand, 
                                                             output_type=args.quantification_type,
+                                                            min_len_after_padding=1, 
                                                             ),
                                )
 
