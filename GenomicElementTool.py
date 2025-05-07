@@ -7,6 +7,7 @@ from pad_region import PadRegion
 from bed2tss_bed import Bed2TssBed
 from one_hot import OneHot
 from motif_search import MotifSearch
+from track2tss_bed import Track2TssBed
 
 class GenomicElementTool:
     @staticmethod
@@ -44,6 +45,12 @@ class GenomicElementTool:
                                                   )
         MotifSearch.set_parser(parser_motif_search)
 
+        parser_track2tss_bed = subparsers.add_parser("track2tss_bed",
+                                                    help="Produce TSS bed file from track.",
+                                                    )
+                        
+        Track2TssBed.set_parser(parser_track2tss_bed)
+
     @staticmethod
     def main(args):
         if args.subcommand == "count_bw":
@@ -56,6 +63,8 @@ class GenomicElementTool:
             OneHot.main(args)
         elif args.subcommand == "motif_search":
             MotifSearch.main(args)
+        elif args.subcommand == "track2tss_bed":
+            Track2TssBed.main(args)
         else:
             raise ValueError("Unknown subcommand: {}".format(args.subcommand))
 
