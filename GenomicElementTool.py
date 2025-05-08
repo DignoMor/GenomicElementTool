@@ -2,7 +2,7 @@
 
 import argparse
 
-from count_bw import CountBw
+from count_bw import CountSingleBw, CountPairedBw
 from pad_region import PadRegion
 from bed2tss_bed import Bed2TssBed
 from one_hot import OneHot
@@ -14,11 +14,17 @@ class GenomicElementTool:
     def set_parser(parser):
         subparsers = parser.add_subparsers(dest="subcommand")
 
-        parser_count_bw = subparsers.add_parser("count_bw",
-                                                help="Count signal in bigwig files.",
-                                                )
+        parser_count_single_bw = subparsers.add_parser("count_single_bw",
+                                                       help="Count signal in a single bigwig files.",
+                                                       )
 
-        CountBw.set_parser(parser_count_bw)
+        CountSingleBw.set_parser(parser_count_single_bw)
+
+        parser_count_paired_bw = subparsers.add_parser("count_paired_bw",
+                                                       help="Count signal in a paired bigwig files.",
+                                                       )
+
+        CountPairedBw.set_parser(parser_count_paired_bw)
 
         parser_pad_region = subparsers.add_parser("pad_region",
                                                   help="Pad regions. This program differs from "
@@ -53,8 +59,10 @@ class GenomicElementTool:
 
     @staticmethod
     def main(args):
-        if args.subcommand == "count_bw":
-            CountBw.main(args)
+        if args.subcommand == "count_single_bw":
+            CountSingleBw.main(args)
+        elif args.subcommand == "count_paired_bw":
+            CountPairedBw.main(args)
         elif args.subcommand == "pad_region":
             PadRegion.main(args)
         elif args.subcommand == "bed2tssbed":

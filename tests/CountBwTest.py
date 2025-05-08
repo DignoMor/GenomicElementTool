@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from count_bw import CountBw
+from count_bw import CountSingleBw, CountPairedBw
 
 class CountBwTest(unittest.TestCase):
     def setUp(self):
@@ -25,12 +25,11 @@ class CountBwTest(unittest.TestCase):
         if os.path.exists(self._test_path):
             shutil.rmtree(self._test_path)
     
-    def get_count_bw_simple_args(self):
+    def get_count_paired_bw_simple_args(self):
         args = argparse.Namespace()
-        args.subcommand = "count_bw"
+        args.subcommand = "count_paired_bw"
         args.bw_pl = self._pl_bw_path
         args.bw_mn = self._mn_bw_path
-        args.single_bw = False
         args.region_file_path = self._bed6_path
         args.region_file_type = "bed6"
         args.override_strand = None
@@ -39,10 +38,10 @@ class CountBwTest(unittest.TestCase):
 
         return args
 
-    def test_count_bw(self):
-        args = self.get_count_bw_simple_args()
+    def test_count_paired_bw(self):
+        args = self.get_count_paired_bw_simple_args()
 
-        CountBw.main(args)
+        CountPairedBw.main(args)
 
         output = np.load(args.opath)
 
@@ -51,9 +50,37 @@ class CountBwTest(unittest.TestCase):
         self.assertEqual(output[2], 1877)
 
         args.quantification_type = "full_track"
-        CountBw.main(args)
+        CountPairedBw.main(args)
 
         output = np.load(args.opath)
 
         self.assertEqual(output.shape, (3, 1001))
 
+    def get_count_single_bw_simple_args(self):
+        args = argparse.Namespace()
+        args.subcommand = "count_single_bw"
+        args.bw_path = self._mn_bw_path
+        args.region_file_path = self._bed3_path
+        args.region_file_type = "bed3"
+        args.quantification_type = "raw_count"
+        args.opath = os.path.join(self._test_path, "output.npy")
+
+        return args
+
+    def test_count_single_bw(self):
+        args = self.get_count_single_bw_simple_args()
+
+        CountSingleBw.main(args)
+
+        output = np.load(args.opath)
+
+        self.assertEqual(output.shape, (3,))
+        self.assertEqual(output[0], -123)
+        self.assertEqual(output[2], -216)
+
+        args.quantification_type = "full_track"
+        CountSingleBw.main(args)
+
+        output = np.load(args.opath)
+
+        self.assertEqual(output.shape, (3, 1001))
