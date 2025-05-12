@@ -145,3 +145,48 @@ class MotifSearch:
                                            args.output_header + "." + motif + ".npy", 
                                            )
 
+    @staticmethod
+    def set_filter_motif_score_args(parser):
+        GenomicElements.set_parser_genomic_element_region(parser)
+
+        parser.add_argument("--motif_search_npy",
+                            help="Numpy file containing motif search scores.",
+                            required=True,
+                            )
+
+        parser.add_argument("--output_header",
+                            help="Output header for filtered GenomicElements bed file.",
+                            required=True,
+                            )
+    
+        parser.add_argument("--filter_base", 
+                            help="Base index for filtering motif search scores.",
+                            type=int,
+                            required=True,
+                            )
+        
+        parser.add_argument("--min_score",
+                            help="Minimum score for filtering motif search scores.",
+                            type=float,
+                            required=True,
+                            )
+
+    @staticmethod
+    def filter_motif_score_main(args):
+        genomic_elements = GenomicElements(region_path=args.region_file_path,
+                                           region_file_type=args.region_file_type,
+                                           fasta_path=None, 
+                                           )
+        genomic_elements.load_region_anno_from_npy("motif", args.motif_search_npy)
+
+        motif_track = genomic_elements.get_anno_arr("motif")
+        filter_base_score = motif_track[:, args.filter_base]
+        filter = filter_base_score > args.min_score
+
+        output_ge = genomic_elements.apply_logical_filter(filter, 
+                                                          args.output_header + ".bed",
+                                                          )
+                         
+        output_ge.save_anno_npy("motif", 
+                                args.output_header + ".motif.npy",
+                                )

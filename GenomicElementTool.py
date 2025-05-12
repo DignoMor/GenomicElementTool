@@ -57,6 +57,12 @@ class GenomicElementTool:
                         
         Track2TssBed.set_parser(parser_track2tss_bed)
 
+        parser_filter_motif_score = subparsers.add_parser("filter_motif_score",
+                                                          help="Filter motif search scores.",
+                                                          )
+        
+        MotifSearch.set_filter_motif_score_args(parser_filter_motif_score)
+
     @staticmethod
     def main(args):
         if args.subcommand == "count_single_bw":
@@ -73,6 +79,8 @@ class GenomicElementTool:
             MotifSearch.main(args)
         elif args.subcommand == "track2tss_bed":
             Track2TssBed.main(args)
+        elif args.subcommand == "filter_motif_score":
+            MotifSearch.filter_motif_score_main(args)
         else:
             raise ValueError("Unknown subcommand: {}".format(args.subcommand))
 

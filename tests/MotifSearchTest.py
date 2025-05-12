@@ -70,3 +70,34 @@ class MotifSearchTest(unittest.TestCase):
         self.assertEqual(lexA_track.shape[1], 1001)
 
         self.assertAlmostEqual(crp_track[1, 100], -0.0929269334)
+    
+    def get_filter_motif_score_simple_args(self):
+        args = argparse.Namespace()
+
+        args.subcommand = "filter_motif_score"
+        args.region_file_path = self._bed6_path
+        args.region_file_type = "bed6"
+        args.motif_search_npy = os.path.join(self._test_path, "three_genes.motif_search.crp.npy")
+        args.output_header = os.path.join(self._test_path, "three_genes.crp.filtered")
+        args.filter_base = 899
+        args.min_score = 0.0
+
+        return args
+        
+    def test_filter_motif_score(self):
+        args = self.get_motif_search_simple_args()
+        MotifSearch.main(args)
+
+        args = self.get_filter_motif_score_simple_args()
+        MotifSearch.filter_motif_score_main(args)
+
+        filtered_ge = GenomicElements(region_path=args.output_header + ".bed",
+                                      region_file_type=args.region_file_type,
+                                      fasta_path=args.fasta_path, 
+                                      )
+        
+        filtered_ge.load_region_anno_from_npy("motif", 
+                                              args.output_header + ".motif.npy",
+                                              )
+        
+        self.assertEqual(filtered_ge.get_anno_arr("motif").shape[0], 1)
