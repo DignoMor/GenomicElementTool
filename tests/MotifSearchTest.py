@@ -41,6 +41,7 @@ class MotifSearchTest(unittest.TestCase):
         args.motif_file = self._meme_motif_path
         args.output_header = os.path.join(self._test_path, "three_genes.motif_search")
         args.estimate_background_freq = True
+        args.reverse_complement = True
 
         return args
 
@@ -93,7 +94,7 @@ class MotifSearchTest(unittest.TestCase):
 
         filtered_ge = GenomicElements(region_path=args.output_header + ".bed",
                                       region_file_type=args.region_file_type,
-                                      fasta_path=args.fasta_path, 
+                                      fasta_path=None, 
                                       )
         
         filtered_ge.load_region_anno_from_npy("motif", 
