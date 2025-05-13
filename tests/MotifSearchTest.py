@@ -41,6 +41,7 @@ class MotifSearchTest(unittest.TestCase):
         args.motif_file = self._meme_motif_path
         args.output_header = os.path.join(self._test_path, "three_genes.motif_search")
         args.estimate_background_freq = True
+        args.reverse_complement = True
 
         return args
 
@@ -69,7 +70,7 @@ class MotifSearchTest(unittest.TestCase):
         self.assertEqual(crp_track.shape[0], 3)
         self.assertEqual(lexA_track.shape[1], 1001)
 
-        self.assertAlmostEqual(crp_track[1, 100], -0.0929269334)
+        self.assertAlmostEqual(crp_track[1, 100], -4.186835217)
     
     def get_filter_motif_score_simple_args(self):
         args = argparse.Namespace()
@@ -79,7 +80,7 @@ class MotifSearchTest(unittest.TestCase):
         args.region_file_type = "bed6"
         args.motif_search_npy = os.path.join(self._test_path, "three_genes.motif_search.crp.npy")
         args.output_header = os.path.join(self._test_path, "three_genes.crp.filtered")
-        args.filter_base = 899
+        args.filter_base = 658
         args.min_score = 0.0
 
         return args
@@ -93,7 +94,7 @@ class MotifSearchTest(unittest.TestCase):
 
         filtered_ge = GenomicElements(region_path=args.output_header + ".bed",
                                       region_file_type=args.region_file_type,
-                                      fasta_path=args.fasta_path, 
+                                      fasta_path=None, 
                                       )
         
         filtered_ge.load_region_anno_from_npy("motif", 

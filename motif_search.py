@@ -5,6 +5,7 @@ from RGTools.GenomicElements import GenomicElements
 from RGTools.MemeMotif import MemeMotif
 
 from RGTools.utils import str2bool
+from RGTools.utils import reverse_complement as RC
 
 class MotifSearch:
     @staticmethod
@@ -29,9 +30,15 @@ class MotifSearch:
                             type=str2bool, 
                             default=True,
                             )
+        
+        parser.add_argument("--reverse_complement",
+                            help="Reverse complement the sequence while matching for motifs.",
+                            type=str2bool,
+                            default=False,
+                            )
 
     @staticmethod
-    def calculate_pwm_score(seq, pwm, alphabet="ACGT", bg_freq=None):
+    def calculate_pwm_score(seq, pwm, alphabet="ACGT", bg_freq=None, reverse_complement=False):
         '''
         Calculate the score of a sequence based on a given position weight matrix (PWM).
         
@@ -42,6 +49,7 @@ class MotifSearch:
               corresponds to a character in the alphabet. 
               shape = (num_positions, num_alphabet_chars)
         - bg_freq: background frequency of the alphabet, a 1D numpy array
+        - reverse_complement: whether to reverse complement the sequence while matching for motifs.
 
         Returns:
         - score: the score of the sequence based on the PWM.
@@ -51,6 +59,9 @@ class MotifSearch:
         
         if not bg_freq: 
             bg_freq = np.ones(len(alphabet)) / len(alphabet)
+
+        if reverse_complement:
+            seq = RC(seq)
 
         alphabet2idx = {char: idx for idx, char in enumerate(alphabet)}
         score = 0
@@ -62,7 +73,7 @@ class MotifSearch:
         return score
 
     @staticmethod
-    def search_one_motif(seq, motif_alphabet, motif_pwm, bg_freq=None):
+    def search_one_motif(seq, motif_alphabet, motif_pwm, bg_freq=None, reverse_complement=False):
         '''
         Search for a single motif in a sequence.
         Returns array of weighted score based on pwm.
@@ -70,6 +81,7 @@ class MotifSearch:
         Keyword arguments:
         - seq: sequence to search
         - motif_pwm: PWM of motif to search for
+        - reverse_complement: whether to reverse complement the sequence while matching for motifs.
 
         Returns:
         - output_arr: array of scores for each position in the sequence.
@@ -91,7 +103,9 @@ class MotifSearch:
         for i in range(seq_len - motif_len + 1):
             target_seq = seq[i:i + motif_len]
             score = MotifSearch.calculate_pwm_score(target_seq, motif_pwm, 
-                                                    motif_alphabet, bg_freq)
+                                                    motif_alphabet, bg_freq, 
+                                                    reverse_complement=reverse_complement,
+                                                    )
 
             output_arr[i + int(motif_len / 2)] = score
         
@@ -119,10 +133,13 @@ class MotifSearch:
                 bg_freq = motif_dataset.get_motif_bg_freq(motif)
                 bg_freq = np.array(bg_freq, dtype=np.float64)
             else:
-                full_str = "".join([s.upper() for s in seq_list])
+                if not args.reverse_complement:
+                    full_str = "".join([s.upper() for s in seq_list])
+                else:
+                    full_str = "".join([RC(s.upper()) for s in seq_list])
                 if "N" in full_str:
                     motif_alphabet += "N"
-                    motif_pwm = np.concatenate((motif_pwm, np.zeros((motif_pwm.shape[0], 1), dtype=np.float64)), axis=1)
+                motif_pwm = np.concatenate((motif_pwm, np.zeros((motif_pwm.shape[0], 1), dtype=np.float64)), axis=1)
                 bg_freq = np.array([int(np.char.count(full_str, a)) for a in motif_alphabet], 
                                    dtype=np.float64)
                 bg_freq /= np.sum(bg_freq)
@@ -134,7 +151,11 @@ class MotifSearch:
             
             output_score_anno_list = []
             for seq in seq_list:
-                motif_score_track = MotifSearch.search_one_motif(seq, motif_alphabet, motif_pwm)
+                motif_score_track = MotifSearch.search_one_motif(seq, 
+                                                                 motif_alphabet, 
+                                                                 motif_pwm, 
+                                                                 reverse_complement=args.reverse_complement, 
+                                                                 )
                 output_score_anno_list.append(motif_score_track)
             output_score_anno_arr = np.array(output_score_anno_list)
 
