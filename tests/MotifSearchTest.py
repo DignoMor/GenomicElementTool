@@ -72,6 +72,26 @@ class MotifSearchTest(unittest.TestCase):
 
         self.assertAlmostEqual(crp_track[1, 100], -0.0929269334)
     
+    def test_main_with_reverse_complement(self):
+        args = self.get_motif_search_simple_args()
+        args.reverse_complement = True
+        MotifSearch.main(args)
+
+        output_ge = GenomicElements(region_path=args.region_file_path,
+                                    region_file_type=args.region_file_type,
+                                    fasta_path=args.fasta_path, 
+                                    )
+        
+        output_ge.load_region_anno_from_npy("CRP", 
+                                            os.path.join(args.output_header + ".crp.npy"), 
+                                            )
+
+        crp_track = output_ge.get_anno_arr("CRP")
+        self.assertEqual(crp_track.shape[0], 3)
+
+        self.assertAlmostEqual(crp_track[2, 661], 3.16347167)
+
+        
     def get_filter_motif_score_simple_args(self):
         args = argparse.Namespace()
 
