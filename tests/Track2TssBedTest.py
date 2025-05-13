@@ -8,7 +8,7 @@ import numpy as np
 
 from RGTools.BedTable import BedRegion, BedTable3
 
-from count_bw import CountBw
+from count_bw import CountSingleBw
 from track2tss_bed import Track2TssBed
 
 class Track2TssBedTest(unittest.TestCase):
@@ -22,29 +22,27 @@ class Track2TssBedTest(unittest.TestCase):
         self._bed6_path = os.path.join("example_data", "three_genes.bed6")
         self._bed6gene_path = os.path.join("example_data", "three_genes.bed6gene")
 
-        self._pl_bw_path = os.path.join("large_data", "ENCFF565BWR.pl.bw")
-        self._mn_bw_path = os.path.join("large_data", "ENCFF775FNU.mn.bw")
+        self._pl_bw_path = os.path.join("RGTools", "large_files", "ENCFF565BWR.pl.bw")
+        self._mn_bw_path = os.path.join("RGTools", "large_files", "ENCFF775FNU.mn.bw")
 
         self._pl_track_path = os.path.join(self._test_path, "procap_sig.pl.npy")
         self._mn_track_path = os.path.join(self._test_path, "procap_sig.mn.npy")
 
         count_bw_args = argparse.Namespace()
-        count_bw_args.subcommand = "count_bw"
-        count_bw_args.bw_pl = self._pl_bw_path
-        count_bw_args.bw_mn = None
-        count_bw_args.single_bw = True
+        count_bw_args.subcommand = "count_single_bw"
+        count_bw_args.bw_path = self._pl_bw_path
         count_bw_args.region_file_path = self._bed3_path
         count_bw_args.region_file_type = "bed3"
         count_bw_args.override_strand = None
         count_bw_args.quantification_type = "full_track"
         count_bw_args.opath = self._pl_track_path
 
-        CountBw.main(count_bw_args)
+        CountSingleBw.main(count_bw_args)
 
-        count_bw_args.bw_pl = self._mn_bw_path
+        count_bw_args.bw_path = self._mn_bw_path
         count_bw_args.opath = self._mn_track_path
 
-        CountBw.main(count_bw_args)
+        CountSingleBw.main(count_bw_args)
 
         return super().setUp()
 

@@ -14,8 +14,8 @@ class CountBwTest(unittest.TestCase):
         if not os.path.exists(self._test_path):
             os.makedirs(self._test_path)
 
-        self._pl_bw_path = os.path.join("large_data", "ENCFF565BWR.pl.bw")
-        self._mn_bw_path = os.path.join("large_data", "ENCFF775FNU.mn.bw")
+        self._pl_bw_path = os.path.join("RGTools", "large_files", "ENCFF565BWR.pl.bw")
+        self._mn_bw_path = os.path.join("RGTools", "large_files", "ENCFF775FNU.mn.bw")
 
         self._bed3_path = os.path.join("example_data", "three_genes.bed3")
         self._bed6_path = os.path.join("example_data", "three_genes.bed6")
