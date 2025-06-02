@@ -70,7 +70,7 @@ class MotifSearchTest(unittest.TestCase):
         self.assertEqual(crp_track.shape[0], 3)
         self.assertEqual(lexA_track.shape[1], 1001)
 
-        self.assertAlmostEqual(crp_track[1, 100], -4.186835217)
+        self.assertAlmostEqual(crp_track[1, 91], -4.186835217)
     
     def get_filter_motif_score_simple_args(self):
         args = argparse.Namespace()
@@ -80,7 +80,7 @@ class MotifSearchTest(unittest.TestCase):
         args.region_file_type = "bed6"
         args.motif_search_npy = os.path.join(self._test_path, "three_genes.motif_search.crp.npy")
         args.output_header = os.path.join(self._test_path, "three_genes.crp.filtered")
-        args.filter_base = 658
+        args.filter_base = 649
         args.min_score = 0.0
 
         return args
