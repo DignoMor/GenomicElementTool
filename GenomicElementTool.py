@@ -8,6 +8,7 @@ from bed2tss_bed import Bed2TssBed
 from one_hot import OneHot
 from motif_search import MotifSearch
 from track2tss_bed import Track2TssBed
+from export import GenomicElementExport
 
 class GenomicElementTool:
     @staticmethod
@@ -63,6 +64,12 @@ class GenomicElementTool:
         
         MotifSearch.set_filter_motif_score_args(parser_filter_motif_score)
 
+        parser_export = subparsers.add_parser("export", 
+                                              help="Export to other formats.", 
+                                              )
+
+        GenomicElementExport.set_parser(parser_export)
+
     @staticmethod
     def main(args):
         if args.subcommand == "count_single_bw":
@@ -81,6 +88,8 @@ class GenomicElementTool:
             Track2TssBed.main(args)
         elif args.subcommand == "filter_motif_score":
             MotifSearch.filter_motif_score_main(args)
+        elif args.subcommand == "export":
+            GenomicElementExport.main(args)
         else:
             raise ValueError("Unknown subcommand: {}".format(args.subcommand))
 
