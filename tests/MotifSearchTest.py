@@ -5,6 +5,8 @@ import requests
 import shutil
 import os
 
+import numpy as np
+
 from motif_search import MotifSearch
 
 from RGTools.GenomicElements import GenomicElements
@@ -82,6 +84,7 @@ class MotifSearchTest(unittest.TestCase):
         args.output_header = os.path.join(self._test_path, "three_genes.crp.filtered")
         args.filter_base = 649
         args.min_score = 0.0
+        args.max_score = np.inf
 
         return args
         

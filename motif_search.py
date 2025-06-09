@@ -112,9 +112,15 @@ class MotifSearch:
         parser.add_argument("--min_score",
                             help="Minimum score for filtering motif search scores.",
                             type=float,
-                            required=True,
+                            default=-np.inf,
                             )
 
+        parser.add_argument("--max_score", 
+                            help="Maximum score for filtering motif search scores.",
+                            type=float,
+                            default=np.inf,
+                            )
+        
     @staticmethod
     def filter_motif_score_main(args):
         genomic_elements = GenomicElements(region_path=args.region_file_path,
@@ -125,7 +131,7 @@ class MotifSearch:
 
         motif_track = genomic_elements.get_anno_arr("motif")
         filter_base_score = motif_track[:, args.filter_base]
-        filter = filter_base_score > args.min_score
+        filter = (filter_base_score > args.min_score) & (filter_base_score < args.max_score)
 
         output_ge = genomic_elements.apply_logical_filter(filter, 
                                                           args.output_header + ".bed",
