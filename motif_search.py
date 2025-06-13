@@ -53,7 +53,7 @@ class MotifSearch:
 
             # Estimate background frequency
             if not args.estimate_background_freq:
-                bg_freq = motif_dataset.get_motif_bg_freq(motif)
+                bg_freq = motif_dataset.get_bg_freq()
                 bg_freq = np.array(bg_freq, dtype=np.float64)
             else:
                 if not args.reverse_complement:
