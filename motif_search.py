@@ -53,8 +53,18 @@ class MotifSearch:
 
             # Estimate background frequency
             if not args.estimate_background_freq:
-                bg_freq = motif_dataset.get_motif_bg_freq(motif)
+                bg_freq = motif_dataset.get_bg_freq()
                 bg_freq = np.array(bg_freq, dtype=np.float64)
+
+                # still estimate N frequency from the sequence
+                full_str = "".join([s.upper() for s in seq_list])
+                if "N" in full_str:
+                    motif_alphabet += "N"
+                    n_count = np.char.count(full_str, "N")
+                    bg_freq = np.concatenate((bg_freq, 
+                                              [n_count / (len(full_str) - n_count)], 
+                                              ))
+                    bg_freq /= np.sum(bg_freq)
             else:
                 if not args.reverse_complement:
                     full_str = "".join([s.upper() for s in seq_list])
