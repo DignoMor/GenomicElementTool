@@ -12,6 +12,7 @@ from export import GenomicElementExport
 class GenomicElementExportTest(unittest.TestCase):
     def setUp(self):
         self.__bed3_path = os.path.join("example_data", "three_genes.bed3")
+        self.__bed6gene_path = os.path.join("example_data", "three_genes.bed6gene")
         self.__fasta_path = os.path.join("RGTools", "large_files", "hg38.fa")
         self.__wdir = "GenomicElementExport_test"
         if not os.path.exists(self.__wdir):
@@ -52,6 +53,7 @@ class GenomicElementExportTest(unittest.TestCase):
             region_file_type="bed3",
             opath=os.path.join(self.__wdir, "test.count.csv"),
             oformat="CountTable",
+            region_id_type="default",
             sample_name=["sample1", "sample2"],
             stat_npy=[self.__sample1_npy_path, self.__sample2_npy_path],
         )
@@ -65,3 +67,18 @@ class GenomicElementExportTest(unittest.TestCase):
         self.assertEqual(output_df.iloc[0, 0], 1)
         self.assertEqual(output_df.iloc[1, 0], 2)
         self.assertEqual(output_df.iloc[2, 0], 3)
+
+        # test gene_symbol id type
+        args.region_file_path = self.__bed6gene_path
+        args.region_file_type = "bed6gene"
+        args.region_id_type = "gene_symbol"
+        GenomicElementExport.export_count_table(args)
+
+        output_df = pd.read_csv(args.opath, 
+                                index_col=0,
+                                )
+
+        self.assertEqual(output_df.shape, (3, 2))
+        self.assertEqual(output_df.iloc[0, 0], 1)
+        self.assertEqual(output_df.iloc[2, 0], 3)
+        self.assertEqual(output_df.index[1], "gene3")
