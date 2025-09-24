@@ -12,6 +12,7 @@ class OneHot:
                                            )
 
         output_arr = genomic_elements.get_all_region_one_hot()
+        output_arr = output_arr.transpose(0, 2, 1)
         np.save(args.opath, output_arr)
 
     @staticmethod
