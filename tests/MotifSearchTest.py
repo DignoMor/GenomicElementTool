@@ -53,7 +53,7 @@ class MotifSearchTest(unittest.TestCase):
         # Call the main function of the MotifSearch class
         MotifSearch.main(args)
 
-        output_ge = GenomicElements(region_path=args.region_file_path,
+        output_ge = GenomicElements(region_file_path=args.region_file_path,
                                     region_file_type=args.region_file_type,
                                     fasta_path=args.fasta_path, 
                                     )
@@ -95,7 +95,7 @@ class MotifSearchTest(unittest.TestCase):
         args = self.get_filter_motif_score_simple_args()
         MotifSearch.filter_motif_score_main(args)
 
-        filtered_ge = GenomicElements(region_path=args.output_header + ".bed",
+        filtered_ge = GenomicElements(region_file_path=args.output_header + ".bed",
                                       region_file_type=args.region_file_type,
                                       fasta_path=None, 
                                       )

@@ -39,7 +39,7 @@ class Bed2TssBed:
 
     @staticmethod
     def main(args):
-        genomic_elements = GenomicElements(region_path=args.region_file_path,
+        genomic_elements = GenomicElements(region_file_path=args.region_file_path,
                                            region_file_type=args.region_file_type,
                                            fasta_path=None, 
                                            )
