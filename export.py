@@ -27,6 +27,11 @@ class GenomicElementExport:
                                                   )
         GenomicElementExport.set_parser_heatmap(parser_heatmap)
 
+        parser_chrom_filtered_ge = subparsers.add_parser("ChromFilteredGE",
+                                                         help="Export GenomicElements with only chromosome given.", 
+                                                         )
+        GenomicElementExport.set_parser_chrom_filtered_ge(parser_chrom_filtered_ge)
+
     @staticmethod
     def set_parser_exogeneous_sequences(parser):
         GenomicElements.set_parser_genome(parser)
@@ -82,8 +87,21 @@ class GenomicElementExport:
         return parser
 
     @staticmethod
+    def set_parser_chrom_filtered_ge(parser):
+        GenomicElements.set_parser_genomic_element_region(parser)
+        parser.add_argument("--chrom_size", 
+                            help="Chromosome size file.",
+                            required=True,
+                            )
+        parser.add_argument("--opath", 
+                            help="Output path of the filtered GenomicElements.",
+                            required=True,
+                            )
+        return parser
+
+    @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "CountTable", "Heatmap"]
+        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -184,6 +202,23 @@ class GenomicElementExport:
         fig.savefig(args.opath)
 
     @staticmethod
+    def export_chrom_filtered_ge(args):
+        ge = GenomicElements(args.region_file_path, 
+                             args.region_file_type, 
+                             None, 
+                             )
+        chrom_size_df = pd.read_csv(args.chrom_size, 
+                                    sep="\t", 
+                                    header=None, 
+                                    names=["chrom", "size"], 
+                                    )
+        chrom_size_dict = dict(zip(chrom_size_df["chrom"], chrom_size_df["size"]))
+
+        filter_logical = [c in chrom_size_dict.keys() for c in ge.get_region_bed_table().get_chrom_names()]
+        output_bt = ge.get_region_bed_table().apply_logical_filter(filter_logical)
+        output_bt.write(args.opath)
+
+    @staticmethod
     def main(args):
         if args.oformat == "ExogeneousSequences":
             GenomicElementExport.export_exogeneous_sequences(args)
@@ -191,5 +226,7 @@ class GenomicElementExport:
             GenomicElementExport.export_count_table(args)
         elif args.oformat == "Heatmap":
             GenomicElementExport.export_heatmap(args)
+        elif args.oformat == "ChromFilteredGE":
+            GenomicElementExport.export_chrom_filtered_ge(args)
         else:
             raise ValueError(f"Invalid output format: {args.oformat}")

@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 
 from export import GenomicElementExport
+from RGTools.BedTable import BedTable3
 
 class GenomicElementExportTest(unittest.TestCase):
     def setUp(self):
@@ -22,6 +23,19 @@ class GenomicElementExportTest(unittest.TestCase):
         self.__sample2_npy_path = os.path.join(self.__wdir, "sample2.npy")
         np.save(self.__sample1_npy_path, np.array([1,2,3]))
         np.save(self.__sample2_npy_path, np.array([4,5,6]))
+
+        self.__chrom_size_path = os.path.join(self.__wdir, "test.chrom.sizes")
+        self.__chrom_size_df = pd.DataFrame({"chrom": ["chr1", "chr2", "chr3", "chr4", "chrFake", "chr6"],
+                                             "size": [248956422, 242193529, 198295559, 190214555, 1000000, 170805979],
+                                             },
+                                            columns=["chrom", "size"],
+                                            )
+        self.__chrom_size_df.to_csv(self.__chrom_size_path,
+                                    sep="\t",
+                                    header=False,
+                                    index=False,
+                                    )
+
         super().setUp()
 
     def tearDown(self):
@@ -82,3 +96,17 @@ class GenomicElementExportTest(unittest.TestCase):
         self.assertEqual(output_df.iloc[0, 0], 1)
         self.assertEqual(output_df.iloc[2, 0], 3)
         self.assertEqual(output_df.index[1], "gene3")
+
+    def test_export_chrom_filtered_ge(self):
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            chrom_size=self.__chrom_size_path,
+            opath=os.path.join(self.__wdir, "test.chrom.filtered.ge"),
+            oformat="ChromFilteredGE",
+        )
+        GenomicElementExport.export_chrom_filtered_ge(args)
+
+        output_bt = BedTable3()
+        output_bt.load_from_file(args.opath)
+        self.assertEqual(len(output_bt), 1)
