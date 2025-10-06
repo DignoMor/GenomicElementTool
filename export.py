@@ -1,7 +1,11 @@
 
 from RGTools.GenomicElements import GenomicElements
 
+
+import numpy as np
 import pandas as pd
+
+import matplotlib.pyplot as plt
 
 class GenomicElementExport:
     @staticmethod
@@ -17,6 +21,11 @@ class GenomicElementExport:
                                                   help="Export count table.",
                                                   )
         GenomicElementExport.set_parser_count_table(parser_count_table)
+
+        parser_heatmap = subparsers.add_parser("Heatmap", 
+                                                  help="Export heatmap.",
+                                                  )
+        GenomicElementExport.set_parser_heatmap(parser_heatmap)
 
     @staticmethod
     def set_parser_exogeneous_sequences(parser):
@@ -59,8 +68,22 @@ class GenomicElementExport:
         return parser
     
     @staticmethod
+    def set_parser_heatmap(parser):
+        GenomicElements.set_parser_genomic_element_region(parser)
+        parser.add_argument("--track_npy", 
+                            help="Path to the track npy file.",
+                            required=True,
+                            )
+
+        parser.add_argument("--opath", 
+                            help="Output path of the heatmap.",
+                            required=True,
+                            )
+        return parser
+
+    @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "CountTable"]
+        return ["ExogeneousSequences", "CountTable", "Heatmap"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -116,10 +139,57 @@ class GenomicElementExport:
                          )
 
     @staticmethod
+    def export_heatmap(args):
+        ge = GenomicElements(args.region_file_path, 
+                             args.region_file_type, 
+                             None, 
+                             )
+        ge.load_region_anno_from_npy("track", args.track_npy)
+        track_arr = ge.get_anno_arr("track")
+
+        width = track_arr.shape[1]
+
+        fig, ax = plt.subplots(2, 1, 
+                               figsize=(4, 8),
+                               height_ratios=[1, 0.2],
+                               )
+
+        # Figure out vmin and vmax
+        vmin=0
+        top_1p_signal_per_track = np.percentile(track_arr, 99, axis=1)
+        vmax = np.percentile(top_1p_signal_per_track, 80)
+
+        # Figure out sorting
+        sort_idx = np.argsort(track_arr.max(axis=1))
+
+        imshow_pos = ax[0].imshow(track_arr[sort_idx, :], 
+                                  cmap="Reds",
+                                  aspect="auto",
+                                  vmin=vmin,
+                                  vmax=vmax,
+                                  )
+
+        ax[0].set_yticks([])
+        ax[0].set_xticks([])
+        ax[1].plot(np.arange(width), 
+                   track_arr.mean(axis=0),
+                   color="black",
+                   )
+        ax[1].set_ylabel("Mean signal")
+        ax[1].set_xlabel("Position")
+        ax[1].set_xticks([0, width/2, width])
+        ax[1].set_xticklabels([-width//2, 0, width//2])
+
+        fig.tight_layout()
+        fig.savefig(args.opath)
+
+    @staticmethod
     def main(args):
         if args.oformat == "ExogeneousSequences":
             GenomicElementExport.export_exogeneous_sequences(args)
         elif args.oformat == "CountTable":
             GenomicElementExport.export_count_table(args)
+        elif args.oformat == "Heatmap":
+            GenomicElementExport.export_heatmap(args)
         else:
             raise ValueError(f"Invalid output format: {args.oformat}")
