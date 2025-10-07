@@ -86,6 +86,18 @@ class GenomicElementExport:
                             default=False,
                             )
 
+        parser.add_argument("--per_track_max_percentile", 
+                            help="Percentile used to determine the maximum value per track.",
+                            type=int,
+                            default=99,
+                            )
+
+        parser.add_argument("--vmax_percentile", 
+                            help="Percentile used to determine the vmax.",
+                            type=int,
+                            default=50,
+                            )
+
         parser.add_argument("--opath", 
                             help="Output path of the heatmap.",
                             required=True,
@@ -163,6 +175,29 @@ class GenomicElementExport:
                          )
 
     @staticmethod
+    def get_heatmap_vmin_vmax(track_arr, per_track_max_percentile, 
+                              vmax_percentile):
+        '''
+        Get the vmin and vmax for the heatmap.
+        This function first determines the maximum value per track, 
+        then determines the vmax based on percentile of the determined 
+        maximum values.
+
+        Keyword arguments:
+        - track_arr: Track array. Must be positive.
+        - per_track_max_percentile: Percentile used to determine the maximum value per track.
+        - vmax_percentile: Percentile used to determine the vmax.
+
+        Returns:
+        - vmin: Vmin.
+        - vmax: Vmax.
+        '''
+        vmin=0
+        top_1p_signal_per_track = np.percentile(track_arr, per_track_max_percentile, axis=1)
+        vmax = np.percentile(top_1p_signal_per_track, vmax_percentile)
+        return vmin, vmax
+
+    @staticmethod
     def export_heatmap(args):
         ge = GenomicElements(args.region_file_path, 
                              args.region_file_type, 
@@ -178,10 +213,10 @@ class GenomicElementExport:
                                height_ratios=[1, 0.2],
                                )
 
-        # Figure out vmin and vmax
-        vmin=0
-        top_1p_signal_per_track = np.percentile(track_arr, 99, axis=1)
-        vmax = np.percentile(top_1p_signal_per_track, 50)
+        vmin, vmax = GenomicElementExport.get_heatmap_vmin_vmax(track_arr, 
+                                                                args.per_track_max_percentile, 
+                                                                args.vmax_percentile, 
+                                                                )
 
         # Figure out sorting
         sort_idx = np.argsort(track_arr.max(axis=1))
