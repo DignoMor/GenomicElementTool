@@ -80,6 +80,12 @@ class GenomicElementExport:
                             required=True,
                             )
         
+        parser.add_argument("--title", 
+                            help="Title of the heatmap.",
+                            type=str,
+                            default=None,
+                            )
+
         parser.add_argument("--negative", 
                             help="Whether the track is negative.",
                             type=str2bool,
@@ -232,6 +238,9 @@ class GenomicElementExport:
                                   vmin=vmin,
                                   vmax=vmax,
                                   )
+
+        if args.title:
+            ax[0].set_title(args.title)
 
         ax[0].set_yticks([])
         ax[0].set_xticks([])

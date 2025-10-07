@@ -39,6 +39,7 @@ cat RGTools/large_files/ENCFF156JSS.bedTRE | \
     --region_file_path ${OPATH}/pints_regions.1kb.bed3 \
     --region_file_type bed3 \
     --track_npy ${OPATH}/pints_regions.1kb.pl.track.npy \
+    --title "GROcap.pl" \
     --per_track_max_percentile 99 \
     --vmax_percentile 20 \
     --opath ${OPATH}/pints_regions.1kb.pl.heatmap.png
@@ -46,6 +47,7 @@ cat RGTools/large_files/ENCFF156JSS.bedTRE | \
 ./GenomicElementTool.py export Heatmap \
     --region_file_path ${OPATH}/pints_regions.1kb.bed3 \
     --region_file_type bed3 \
+    --title "GROcap.mn" \
     --track_npy ${OPATH}/pints_regions.1kb.mn.track.npy \
     --negative True \
     --opath ${OPATH}/pints_regions.1kb.mn.heatmap.png
