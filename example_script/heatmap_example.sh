@@ -21,26 +21,29 @@ cat RGTools/large_files/ENCFF156JSS.bedTRE | \
     --method_resolving_invalid_region drop \
     --opath ${OPATH}/pints_regions.1kb.bed3
 
-./GenomicElementTool.py count_paired_bw \
+./GenomicElementTool.py count_single_bw \
     --region_file_path ${OPATH}/pints_regions.1kb.bed3 \
     --region_file_type bed3 \
-    --bw_pl RGTools/large_files/ENCFF565BWR.pl.bw \
-    --bw_mn RGTools/large_files/ENCFF775FNU.mn.bw \
-    --override_strand "+" \
+    --bw_path RGTools/large_files/ENCFF565BWR.pl.bw \
     --quantification_type full_track \
     --opath ${OPATH}/pints_regions.1kb.pl.track.npy
 
-./GenomicElementTool.py count_paired_bw \
+./GenomicElementTool.py count_single_bw \
     --region_file_path ${OPATH}/pints_regions.1kb.bed3 \
     --region_file_type bed3 \
-    --bw_pl RGTools/large_files/ENCFF565BWR.pl.bw \
-    --bw_mn RGTools/large_files/ENCFF775FNU.mn.bw \
-    --override_strand "-" \
+    --bw_path RGTools/large_files/ENCFF775FNU.mn.bw \
     --quantification_type full_track \
     --opath ${OPATH}/pints_regions.1kb.mn.track.npy
 
-./GenomicElementTool.py export Heatmap\
+./GenomicElementTool.py export Heatmap \
     --region_file_path ${OPATH}/pints_regions.1kb.bed3 \
     --region_file_type bed3 \
     --track_npy ${OPATH}/pints_regions.1kb.pl.track.npy \
-    --opath ${OPATH}/pints_regions.1kb.heatmap.png
+    --opath ${OPATH}/pints_regions.1kb.pl.heatmap.png
+
+./GenomicElementTool.py export Heatmap \
+    --region_file_path ${OPATH}/pints_regions.1kb.bed3 \
+    --region_file_type bed3 \
+    --track_npy ${OPATH}/pints_regions.1kb.mn.track.npy \
+    --negative True \
+    --opath ${OPATH}/pints_regions.1kb.mn.heatmap.png

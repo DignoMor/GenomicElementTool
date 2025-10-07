@@ -1,6 +1,6 @@
 
 from RGTools.GenomicElements import GenomicElements
-
+from RGTools.utils import str2bool
 
 import numpy as np
 import pandas as pd
@@ -78,6 +78,12 @@ class GenomicElementExport:
         parser.add_argument("--track_npy", 
                             help="Path to the track npy file.",
                             required=True,
+                            )
+        
+        parser.add_argument("--negative", 
+                            help="Whether the track is negative.",
+                            type=str2bool,
+                            default=False,
                             )
 
         parser.add_argument("--opath", 
@@ -163,7 +169,7 @@ class GenomicElementExport:
                              None, 
                              )
         ge.load_region_anno_from_npy("track", args.track_npy)
-        track_arr = ge.get_anno_arr("track")
+        track_arr = np.abs(ge.get_anno_arr("track"))
 
         width = track_arr.shape[1]
 
@@ -175,13 +181,18 @@ class GenomicElementExport:
         # Figure out vmin and vmax
         vmin=0
         top_1p_signal_per_track = np.percentile(track_arr, 99, axis=1)
-        vmax = np.percentile(top_1p_signal_per_track, 80)
+        vmax = np.percentile(top_1p_signal_per_track, 50)
 
         # Figure out sorting
         sort_idx = np.argsort(track_arr.max(axis=1))
 
+        if args.negative:
+            plot_cmap = "Blues"
+        else:
+            plot_cmap = "Reds"
+
         imshow_pos = ax[0].imshow(track_arr[sort_idx, :], 
-                                  cmap="Reds",
+                                  cmap=plot_cmap,
                                   aspect="auto",
                                   vmin=vmin,
                                   vmax=vmax,
@@ -190,7 +201,7 @@ class GenomicElementExport:
         ax[0].set_yticks([])
         ax[0].set_xticks([])
         ax[1].plot(np.arange(width), 
-                   track_arr.mean(axis=0),
+                   - track_arr.mean(axis=0) if args.negative else track_arr.mean(axis=0),
                    color="black",
                    )
         ax[1].set_ylabel("Mean signal")
