@@ -35,6 +35,8 @@ class CountBwTest(unittest.TestCase):
         args.override_strand = None
         args.quantification_type = "raw_count"
         args.opath = os.path.join(self._test_path, "output.npy")
+        args.negative_mn = False
+        args.flip_mn = True
 
         return args
 
@@ -55,6 +57,15 @@ class CountBwTest(unittest.TestCase):
         output = np.load(args.opath)
 
         self.assertEqual(output.shape, (3, 1001))
+        self.assertTrue(np.sum(output[0, :]) > 0)
+
+        args.negative_mn = True
+        CountPairedBw.main(args)
+
+        output = np.load(args.opath)
+
+        self.assertEqual(output.shape, (3, 1001))
+        self.assertTrue(np.sum(output[0, :]) < 0)
 
     def get_count_single_bw_simple_args(self):
         args = argparse.Namespace()

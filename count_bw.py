@@ -83,6 +83,18 @@ class CountPairedBw:
                             choices=PairedBwTrack.get_supported_quantification_type(),
                             )
 
+        parser.add_argument("--negative_mn",
+                            help="Whether to output the minus strand signal as negative.",
+                            type=str2bool,
+                            default=True,
+                            )
+
+        parser.add_argument("--flip_mn",
+                            help="If to flip the minus strand signal.",
+                            type=str2bool,
+                            default=False,
+                            )
+
         parser.add_argument("--opath",
                             help="Output path for counting.",
                             required=True,
@@ -114,6 +126,8 @@ class CountPairedBw:
                                                             strand, 
                                                             output_type=args.quantification_type,
                                                             min_len_after_padding=1, 
+                                                            flip_mn=args.flip_mn,
+                                                            negative_mn=args.negative_mn,
                                                             ),
                                )
 
