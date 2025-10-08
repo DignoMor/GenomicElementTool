@@ -1,5 +1,4 @@
-
-OPATH="heatmap_example"
+OPATH="wdir/heatmap_example"
 mkdir -p ${OPATH}
 
 cat RGTools/large_files/ENCFF156JSS.bedTRE | \
