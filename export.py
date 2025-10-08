@@ -204,6 +204,51 @@ class GenomicElementExport:
         return vmin, vmax
 
     @staticmethod
+    def plot_heatmap_image(ax, track_arr, sort_idx, plot_cmap, title, vmin, vmax):
+        '''
+        Plot a heatmap with imshow.
+
+        Keyword arguments:
+        - ax: Axes object.
+        - track_arr: Track array. Must be positive.
+        - sort_idx: Sort index.
+        - plot_cmap: Plot cmap.
+        - title: Title.
+        - vmin: Vmin.
+        - vmax: Vmax.
+
+        Returns:
+        - imshow_pos: Imshow position.
+        '''
+        imshow_pos = ax.imshow(track_arr[sort_idx, :], 
+                               cmap=plot_cmap,
+                               aspect="auto",
+                               vmin=vmin,
+                               vmax=vmax,
+                               )
+        
+        ax.set_yticks([])
+        ax.set_xticks([])
+        ax.set_title(title)
+
+        return imshow_pos
+
+    @staticmethod
+    def plot_heatmap_mean(ax, track_arr, negative_sig):
+        '''
+        Plot the mean signal.
+        '''
+        width = track_arr.shape[1]
+        ax.plot(np.arange(width), 
+                - track_arr.mean(axis=0) if negative_sig else track_arr.mean(axis=0),
+                color="black",
+                )
+        ax.set_ylabel("Mean signal")
+        ax.set_xlabel("Position")
+        ax.set_xticks([0, width/2, width])
+        ax.set_xticklabels([-width//2, 0, width//2])
+
+    @staticmethod
     def export_heatmap(args):
         ge = GenomicElements(args.region_file_path, 
                              args.region_file_type, 
@@ -211,8 +256,6 @@ class GenomicElementExport:
                              )
         ge.load_region_anno_from_npy("track", args.track_npy)
         track_arr = np.abs(ge.get_anno_arr("track"))
-
-        width = track_arr.shape[1]
 
         fig, ax = plt.subplots(2, 1, 
                                figsize=(4, 8),
@@ -232,26 +275,19 @@ class GenomicElementExport:
         else:
             plot_cmap = "Reds"
 
-        imshow_pos = ax[0].imshow(track_arr[sort_idx, :], 
-                                  cmap=plot_cmap,
-                                  aspect="auto",
-                                  vmin=vmin,
-                                  vmax=vmax,
-                                  )
+        imshow_pos = GenomicElementExport.plot_heatmap_image(ax[0], 
+                                                             track_arr, 
+                                                             sort_idx, 
+                                                             plot_cmap, 
+                                                             args.title,
+                                                             vmin, 
+                                                             vmax,
+                                                             )
 
-        if args.title:
-            ax[0].set_title(args.title)
-
-        ax[0].set_yticks([])
-        ax[0].set_xticks([])
-        ax[1].plot(np.arange(width), 
-                   - track_arr.mean(axis=0) if args.negative else track_arr.mean(axis=0),
-                   color="black",
-                   )
-        ax[1].set_ylabel("Mean signal")
-        ax[1].set_xlabel("Position")
-        ax[1].set_xticks([0, width/2, width])
-        ax[1].set_xticklabels([-width//2, 0, width//2])
+        GenomicElementExport.plot_heatmap_mean(ax[1], 
+                                               track_arr, 
+                                               args.negative,
+                                               )
 
         fig.tight_layout()
         fig.savefig(args.opath)
