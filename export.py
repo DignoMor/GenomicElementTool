@@ -77,19 +77,22 @@ class GenomicElementExport:
         GenomicElements.set_parser_genomic_element_region(parser)
         parser.add_argument("--track_npy", 
                             help="Path to the track npy file.",
+                            action="append",
                             required=True,
                             )
         
         parser.add_argument("--title", 
                             help="Title of the heatmap.",
                             type=str,
-                            default=None,
+                            action="append",
+                            required=True,
                             )
 
         parser.add_argument("--negative", 
                             help="Whether the track is negative.",
                             type=str2bool,
-                            default=False,
+                            action="append",
+                            required=True,
                             )
 
         parser.add_argument("--per_track_max_percentile", 
@@ -204,7 +207,9 @@ class GenomicElementExport:
         return vmin, vmax
 
     @staticmethod
-    def plot_heatmap_image(ax, track_arr, sort_idx, plot_cmap, title, vmin, vmax):
+    def plot_heatmap_image(ax, track_arr, sort_idx, plot_cmap, 
+                           title, per_track_max_percentile, 
+                           vmax_percentile):
         '''
         Plot a heatmap with imshow.
 
@@ -214,12 +219,17 @@ class GenomicElementExport:
         - sort_idx: Sort index.
         - plot_cmap: Plot cmap.
         - title: Title.
-        - vmin: Vmin.
-        - vmax: Vmax.
+        - per_track_max_percentile: Percentile used to determine the maximum value per track.
+        - vmax_percentile: Percentile used to determine the vmax.
 
         Returns:
         - imshow_pos: Imshow position.
         '''
+        vmin, vmax = GenomicElementExport.get_heatmap_vmin_vmax(track_arr, 
+                                                                per_track_max_percentile, 
+                                                                vmax_percentile, 
+                                                                )
+
         imshow_pos = ax.imshow(track_arr[sort_idx, :], 
                                cmap=plot_cmap,
                                aspect="auto",
@@ -254,40 +264,41 @@ class GenomicElementExport:
                              args.region_file_type, 
                              None, 
                              )
-        ge.load_region_anno_from_npy("track", args.track_npy)
-        track_arr = np.abs(ge.get_anno_arr("track"))
+        for track_title, track_npy in zip(args.title, args.track_npy):
+            ge.load_region_anno_from_npy(track_title, track_npy)
 
-        fig, ax = plt.subplots(2, 1, 
-                               figsize=(4, 8),
+        track_arr_list = [np.abs(ge.get_anno_arr(track_title)) for track_title in args.title]
+
+        fig, ax = plt.subplots(2, len(args.title), 
+                               figsize=(4 * len(args.title), 8),
                                height_ratios=[1, 0.2],
+                               squeeze=False,
                                )
 
-        vmin, vmax = GenomicElementExport.get_heatmap_vmin_vmax(track_arr, 
-                                                                args.per_track_max_percentile, 
-                                                                args.vmax_percentile, 
-                                                                )
-
         # Figure out sorting
-        sort_idx = np.argsort(track_arr.max(axis=1))
+        sort_idx = np.argsort(np.concatenate(track_arr_list, axis=1).max(axis=1))
 
-        if args.negative:
-            plot_cmap = "Blues"
-        else:
-            plot_cmap = "Reds"
+        for ind, track_title in enumerate(args.title):
+            track_arr = np.abs(ge.get_anno_arr(track_title))
 
-        imshow_pos = GenomicElementExport.plot_heatmap_image(ax[0], 
-                                                             track_arr, 
-                                                             sort_idx, 
-                                                             plot_cmap, 
-                                                             args.title,
-                                                             vmin, 
-                                                             vmax,
-                                                             )
+            if args.negative[ind]:
+                plot_cmap = "Blues"
+            else:
+                plot_cmap = "Reds"
 
-        GenomicElementExport.plot_heatmap_mean(ax[1], 
-                                               track_arr, 
-                                               args.negative,
-                                               )
+            imshow_pos = GenomicElementExport.plot_heatmap_image(ax[0, ind], 
+                                                                 track_arr, 
+                                                                 sort_idx, 
+                                                                 plot_cmap, 
+                                                                 track_title,
+                                                                 args.per_track_max_percentile, 
+                                                                 args.vmax_percentile,
+                                                                 )
+
+            GenomicElementExport.plot_heatmap_mean(ax[1, ind], 
+                                                   track_arr, 
+                                                   args.negative[ind],
+                                                   )
 
         fig.tight_layout()
         fig.savefig(args.opath)
