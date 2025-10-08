@@ -204,6 +204,10 @@ class GenomicElementExport:
         vmin=0
         top_1p_signal_per_track = np.percentile(track_arr, per_track_max_percentile, axis=1)
         vmax = np.percentile(top_1p_signal_per_track, vmax_percentile)
+
+        if vmax==0: 
+            vmax = 1
+
         return vmin, vmax
 
     @staticmethod
