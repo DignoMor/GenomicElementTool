@@ -86,13 +86,13 @@ class CountPairedBw:
         parser.add_argument("--negative_mn",
                             help="Whether to output the minus strand signal as negative.",
                             type=str2bool,
-                            default=True,
+                            required=True,
                             )
 
         parser.add_argument("--flip_mn",
                             help="If to flip the minus strand signal.",
                             type=str2bool,
-                            default=False,
+                            required=True,
                             )
 
         parser.add_argument("--opath",
