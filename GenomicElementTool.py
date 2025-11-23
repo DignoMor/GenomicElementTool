@@ -9,6 +9,7 @@ from one_hot import OneHot
 from motif_search import MotifSearch
 from track2tss_bed import Track2TssBed
 from export import GenomicElementExport
+from GenomicElementImport import GenomicElementImport
 
 class GenomicElementTool:
     @staticmethod
@@ -70,6 +71,12 @@ class GenomicElementTool:
 
         GenomicElementExport.set_parser(parser_export)
 
+        parser_import = subparsers.add_parser("import", 
+                                              help="Import from other formats.", 
+                                              )
+
+        GenomicElementImport.set_parser(parser_import)
+
     @staticmethod
     def main(args):
         if args.subcommand == "count_single_bw":
@@ -90,6 +97,8 @@ class GenomicElementTool:
             MotifSearch.filter_motif_score_main(args)
         elif args.subcommand == "export":
             GenomicElementExport.main(args)
+        elif args.subcommand == "import":
+            GenomicElementImport.main(args)
         else:
             raise ValueError("Unknown subcommand: {}".format(args.subcommand))
 
