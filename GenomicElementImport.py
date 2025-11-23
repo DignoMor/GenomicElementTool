@@ -1,5 +1,6 @@
 
 from RGTools.GenomicElements import GenomicElements
+from RGTools.ListFile import ListFile
 
 import numpy as np
 import pandas as pd
@@ -46,16 +47,14 @@ class GenomicElementImport:
                                    region_file_type=args.region_file_type,
                                    fasta_path=None,
                                    )
-        with open(args.inpath, 'r') as f:
-            region_list = [line.strip() for line in f.readlines() if line.strip()]
-
-        if not input_ge.get_num_regions() == len(region_list):
-            raise ValueError(f"Number of regions in the input file {len(region_list)} does not match the number of regions in the region file {input_ge.get_num_regions()}")
-
-        # Convert list of strings to numpy array
-        region_arr = np.array(region_list, dtype=object)
+        lsfile = ListFile()
+        lsfile.read_file(args.inpath)
         
-        # Load the region list as an annotation
+        if not input_ge.get_num_regions() == lsfile.get_num_lines():
+            raise ValueError(f"Number of regions in the input file {lsfile.get_num_lines()} does not match the number of regions in the region file {input_ge.get_num_regions()}")
+
+        region_arr = lsfile.get_contents()
+
         input_ge.load_region_anno_from_arr("region_list", region_arr)
 
         if args.opath.endswith(".npz"): 
