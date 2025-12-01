@@ -39,18 +39,35 @@ class GenomicElementImportTest(unittest.TestCase):
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.npy"),
             informat="list",
+            dtype="str"
         )
         GenomicElementImport.import_list(args)
 
-        # Verify the output file exists
-        self.assertTrue(os.path.exists(args.opath))
-        
+    def test_import_int_list(self):
+        # Create a test list file with 3 lines (matching three_genes.bed3)
+        list_file = os.path.join(self.__wdir, "test_list.txt")
+        with open(list_file, 'w') as f:
+            f.write("1\n")
+            f.write("2\n")
+            f.write("3\n")
+
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            inpath=list_file,
+            opath=os.path.join(self.__wdir, "test_region_list.npy"),
+            informat="list",
+            dtype="np.int32"
+        )
+        GenomicElementImport.import_list(args)
+
         # Load and verify the saved annotation
-        loaded_arr = np.load(args.opath, allow_pickle=True)
+        loaded_arr = np.load(args.opath)
+        self.assertEqual(loaded_arr.dtype, np.int32)
         self.assertEqual(len(loaded_arr), 3)
-        self.assertEqual(loaded_arr[0], "region1")
-        self.assertEqual(loaded_arr[1], "region2")
-        self.assertEqual(loaded_arr[2], "region3")
+        self.assertEqual(loaded_arr[0], 1)
+        self.assertEqual(loaded_arr[1], 2)
+        self.assertEqual(loaded_arr[2], 3)
 
     def test_import_list_npz(self):
         # Create a test list file with 3 lines (matching three_genes.bed3)
@@ -66,6 +83,7 @@ class GenomicElementImportTest(unittest.TestCase):
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.npz"),
             informat="list",
+            dtype="str"
         )
         GenomicElementImport.import_list(args)
 
@@ -95,6 +113,7 @@ class GenomicElementImportTest(unittest.TestCase):
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.npy"),
             informat="list",
+            dtype="str"
         )
         
         with self.assertRaises(ValueError) as context:
@@ -115,6 +134,7 @@ class GenomicElementImportTest(unittest.TestCase):
             region_file_type="bed3",
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.txt"),  # Invalid extension
+            dtype="str",
             informat="list",
         )
         

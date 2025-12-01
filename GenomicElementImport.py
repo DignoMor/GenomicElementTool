@@ -32,6 +32,14 @@ class GenomicElementImport:
                             help="Output path of the region file.",
                             required=True,
                             )
+        
+        parser.add_argument("--dtype", 
+                            help="Dtype of the outputted array.",
+                            default="str",
+                            type=str,
+                            choices=["str", "np.int32", "np.int64", "np.float32", "np.float64"],
+                            )
+
         return parser
 
     @staticmethod
@@ -53,7 +61,7 @@ class GenomicElementImport:
         if not input_ge.get_num_regions() == lsfile.get_num_lines():
             raise ValueError(f"Number of regions in the input file {lsfile.get_num_lines()} does not match the number of regions in the region file {input_ge.get_num_regions()}")
 
-        region_arr = lsfile.get_contents()
+        region_arr = lsfile.get_contents(dtype=args.dtype)
 
         input_ge.load_region_anno_from_arr("region_list", region_arr)
 
