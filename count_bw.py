@@ -117,8 +117,12 @@ class CountPairedBw:
         for region in region_bt.iter_regions():
             if args.override_strand:
                 strand = args.override_strand
+            elif args.region_file_type == "bed3":
+                strand = "."
+            elif not region["strand"]:
+                strand = "."
             else:
-                strand = "." if args.region_file_type == "bed3" else region["strand"]
+                strand = region["strand"]
 
             output_list.append(bw_track.count_single_region(region["chrom"],
                                                             region["start"],
