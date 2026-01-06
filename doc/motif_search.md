@@ -49,11 +49,14 @@ GenomicElementTool.py motif_search [OPTIONS]
   - If `False`: Uses background frequencies from the MEME file
   - Note: N frequencies are always estimated from sequences when present
 
-- `--reverse_complement` (bool)
-  - Search reverse complement sequences for motif matches
-  - Default: `False`
-  - If `True`: Sequences are reverse-complemented before motif search
-  - If `False`: Only forward strand is searched
+- `--strand` (str)
+  - Search reverse complement sequences for motif matches. Choices: "+", "-", "both".
+  - Default: `"+"`
+  - If `"+"`: Search the fasta sequence with the given pwm.
+  - If `"-"`: search the reverse complemented fasta sequence with the given pwm.
+    (The `output[i]` is the matching score of `RC(seq[i, i+l])`)
+  - If `"both"`: `output[i]` is the higher score between matching `seq[i, i+l]` 
+    and `RC(seq[i, i+l])`.
 
 ## Output
 
@@ -86,7 +89,7 @@ For each motif in the MEME file, the program generates:
 - Scores are computed as log-odds ratios: `log10(P(motif|sequence) / P(motif|background))`
 - Pseudo-counts are added to prevent zero probabilities: `(counts + 1) / (total + alphabet_size)`
 - For motifs of length L, the last L-1 positions in each sequence receive minimum scores (motif doesn't fit). 
-  This is to maintaint the signal_track `dimension == sequence length` invariable.
+  This is to maintain the signal_track `dimension == sequence length` invariable.
 
 ## Examples
 
@@ -114,7 +117,7 @@ GenomicElementTool.py motif_search \
     --region_file_path regions.bed6 \
     --region_file_type bed6 \
     --motif_file motifs.meme \
-    --reverse_complement True \
+    --strand + \
     --output_header rc_motif_search
 ```
 

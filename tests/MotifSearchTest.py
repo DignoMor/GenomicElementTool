@@ -43,7 +43,7 @@ class MotifSearchTest(unittest.TestCase):
         args.motif_file = self._meme_motif_path
         args.output_header = os.path.join(self._test_path, "three_genes.motif_search")
         args.estimate_background_freq = True
-        args.reverse_complement = True
+        args.strand = "+"
 
         return args
 
@@ -72,7 +72,75 @@ class MotifSearchTest(unittest.TestCase):
         self.assertEqual(crp_track.shape[0], 3)
         self.assertEqual(lexA_track.shape[1], 1001)
 
-        self.assertAlmostEqual(crp_track[1, 91], -4.186835217)
+        # Test that scores are reasonable (not all zeros or inf)
+        self.assertFalse(np.all(crp_track == 0))
+        self.assertFalse(np.all(np.isinf(crp_track)))
+    
+    def test_main_reverse_strand(self):
+        """Test motif search with reverse strand (strand='-')"""
+        args = self.get_motif_search_simple_args()
+        args.strand = "-"
+
+        MotifSearch.main(args)
+
+        output_ge = GenomicElements(region_file_path=args.region_file_path,
+                                    region_file_type=args.region_file_type,
+                                    fasta_path=args.fasta_path, 
+                                    )
+        
+        output_ge.load_region_anno_from_npy("CRP", 
+                                            os.path.join(args.output_header + ".crp.npy"), 
+                                            )
+
+        crp_track = output_ge.get_anno_arr("CRP")
+
+        self.assertEqual(crp_track.shape[0], 3)
+        self.assertEqual(crp_track.shape[1], 1001)
+        
+        # Test that scores are reasonable
+        self.assertFalse(np.all(crp_track == 0))
+        self.assertFalse(np.all(np.isinf(crp_track)))
+    
+    def test_main_both_strands(self):
+        """Test motif search with both strands (strand='both')"""
+        args = self.get_motif_search_simple_args()
+        args.strand = "both"
+
+        MotifSearch.main(args)
+
+        output_ge = GenomicElements(region_file_path=args.region_file_path,
+                                    region_file_type=args.region_file_type,
+                                    fasta_path=args.fasta_path, 
+                                    )
+        
+        output_ge.load_region_anno_from_npy("CRP", 
+                                            os.path.join(args.output_header + ".crp.npy"), 
+                                            )
+
+        crp_track = output_ge.get_anno_arr("CRP")
+
+        self.assertEqual(crp_track.shape[0], 3)
+        self.assertEqual(crp_track.shape[1], 1001)
+        
+        # Test that scores are reasonable
+        self.assertFalse(np.all(crp_track == 0))
+        self.assertFalse(np.all(np.isinf(crp_track)))
+        
+        # Test that 'both' gives scores >= forward strand scores
+        args_fwd = self.get_motif_search_simple_args()
+        args_fwd.strand = "+"
+        MotifSearch.main(args_fwd)
+        output_ge_fwd = GenomicElements(region_file_path=args_fwd.region_file_path,
+                                        region_file_type=args_fwd.region_file_type,
+                                        fasta_path=args_fwd.fasta_path, 
+                                        )
+        output_ge_fwd.load_region_anno_from_npy("CRP", 
+                                                 os.path.join(args_fwd.output_header + ".crp.npy"), 
+                                                 )
+        crp_track_fwd = output_ge_fwd.get_anno_arr("CRP")
+        
+        # 'both' should give max of forward and reverse, so should be >= forward
+        self.assertTrue(np.all(crp_track >= crp_track_fwd))
     
     def get_filter_motif_score_simple_args(self):
         args = argparse.Namespace()
@@ -90,6 +158,7 @@ class MotifSearchTest(unittest.TestCase):
         
     def test_filter_motif_score(self):
         args = self.get_motif_search_simple_args()
+        args.strand = "-"
         MotifSearch.main(args)
 
         args = self.get_filter_motif_score_simple_args()

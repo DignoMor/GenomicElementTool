@@ -5,7 +5,6 @@ from RGTools.GenomicElements import GenomicElements
 from RGTools.MemeMotif import MemeMotif
 
 from RGTools.utils import str2bool
-from RGTools.utils import reverse_complement as RC
 
 class MotifSearch:
     @staticmethod
@@ -31,10 +30,11 @@ class MotifSearch:
                             default=True,
                             )
         
-        parser.add_argument("--reverse_complement",
-                            help="Reverse complement the sequence while matching for motifs.",
-                            type=str2bool,
-                            default=False,
+        parser.add_argument("--strand",
+                            help="Strand to search for motif matches. Choices: '+', '-', 'both'.",
+                            type=str,
+                            choices=["+", "-", "both"],
+                            default="+",
                             )
 
     @staticmethod
@@ -66,13 +66,12 @@ class MotifSearch:
                                               ))
                     bg_freq /= np.sum(bg_freq)
             else:
-                if not args.reverse_complement:
-                    full_str = "".join([s.upper() for s in seq_list])
-                else:
-                    full_str = "".join([RC(s.upper()) for s in seq_list])
+                # Use original sequences for background frequency estimation
+                # (reverse complementing is handled inside search_one_motif during scoring)
+                full_str = "".join([s.upper() for s in seq_list])
                 if "N" in full_str:
                     motif_alphabet += "N"
-                motif_pwm = np.concatenate((motif_pwm, np.zeros((motif_pwm.shape[0], 1), dtype=np.float64)), axis=1)
+                    motif_pwm = np.concatenate((motif_pwm, np.zeros((motif_pwm.shape[0], 1), dtype=np.float64)), axis=1)
                 bg_freq = np.array([int(np.char.count(full_str, a)) for a in motif_alphabet], 
                                    dtype=np.float64)
                 bg_freq /= np.sum(bg_freq)
@@ -87,7 +86,8 @@ class MotifSearch:
                 motif_score_track = MemeMotif.search_one_motif(seq, 
                                                                motif_alphabet, 
                                                                motif_pwm, 
-                                                               reverse_complement=args.reverse_complement, 
+                                                               bg_freq=bg_freq,
+                                                               strand=args.strand, 
                                                                )
                 output_score_anno_list.append(motif_score_track)
             output_score_anno_arr = np.array(output_score_anno_list)
