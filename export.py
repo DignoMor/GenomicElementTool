@@ -32,6 +32,11 @@ class GenomicElementExport:
                                                          )
         GenomicElementExport.set_parser_chrom_filtered_ge(parser_chrom_filtered_ge)
 
+        parser_trebed = subparsers.add_parser("TREbed",
+                                             help="Export TREbed file with fwdTSS and revTSS annotations.",
+                                             )
+        GenomicElementExport.set_parser_trebed(parser_trebed)
+
     @staticmethod
     def set_parser_exogeneous_sequences(parser):
         GenomicElements.set_parser_genome(parser)
@@ -126,8 +131,25 @@ class GenomicElementExport:
         return parser
 
     @staticmethod
+    def set_parser_trebed(parser):
+        GenomicElements.set_parser_genomic_element_region(parser)
+        parser.add_argument("--pl_sig_track", 
+                            help="Path to plus strand GROcap/PROcap signal track npy/npz file.",
+                            required=True,
+                            )
+        parser.add_argument("--mn_sig_track", 
+                            help="Path to minus strand GROcap/PROcap signal track npy/npz file.",
+                            required=True,
+                            )
+        parser.add_argument("--opath", 
+                            help="Output path for the TREbed file.",
+                            required=True,
+                            )
+        return parser
+
+    @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE"]
+        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE", "TREbed"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -333,6 +355,64 @@ class GenomicElementExport:
         output_bt.write(args.opath)
 
     @staticmethod
+    def export_trebed(args):
+        '''
+        Export TREbed file with forward and reverse TSS annotations.
+        
+        Examines GROcap/PROcap signal tracks to find TSS positions:
+        - fwsTSS: Absolute genomic position of maximum signal in plus strand track
+        - revTSS: Absolute genomic position of maximum signal in minus strand track
+        '''
+        ge = GenomicElements(args.region_file_path, 
+                             args.region_file_type, 
+                             None, 
+                             )
+        
+        ge.load_region_anno_from_npy("pl_track", args.pl_sig_track)
+        ge.load_region_anno_from_npy("mn_track", args.mn_sig_track)
+        
+        pl_track_arr = ge.get_anno_arr("pl_track")
+        mn_track_arr = ge.get_anno_arr("mn_track")
+        
+        if pl_track_arr.shape != mn_track_arr.shape:
+            raise ValueError(f"Plus and minus strand tracks must have the same shape. "
+                           f"Plus: {pl_track_arr.shape}, Minus: {mn_track_arr.shape}")
+        
+        # Create TREbed output
+        trebed_bt = GenomicElements.BedTableTREBed(enable_sort=False)
+        
+        output_dict_list = []
+        for i, region in enumerate(ge.get_region_bed_table().iter_regions()):
+            pl_track = pl_track_arr[i]
+            mn_track = mn_track_arr[i]
+            
+            # Find TSS positions (position with maximum signal, relative to region start)
+            # fwsTSS: forward TSS from plus strand track
+            # revTSS: reverse TSS from minus strand track
+            fwsTSS_rel_pos = np.argmax(pl_track) if len(pl_track) > 0 else 0
+            revTSS_rel_pos = np.argmax(mn_track) if len(mn_track) > 0 else 0
+            
+            # Convert to absolute genomic coordinates
+            fwsTSS = region["start"] + fwsTSS_rel_pos
+            revTSS = region["start"] + revTSS_rel_pos
+            
+            # Create region name (default: chrom:start-end)
+            region_name = f"{region['chrom']}:{region['start']}-{region['end']}"
+            
+            output_dict = {
+                "chrom": region["chrom"],
+                "start": region["start"],
+                "end": region["end"],
+                "name": region_name,
+                "fwsTSS": fwsTSS,
+                "revTSS": revTSS,
+            }
+            output_dict_list.append(output_dict)
+        
+        trebed_bt.load_from_dataframe(pd.DataFrame(output_dict_list))
+        trebed_bt.write(args.opath)
+
+    @staticmethod
     def main(args):
         if args.oformat == "ExogeneousSequences":
             GenomicElementExport.export_exogeneous_sequences(args)
@@ -342,5 +422,7 @@ class GenomicElementExport:
             GenomicElementExport.export_heatmap(args)
         elif args.oformat == "ChromFilteredGE":
             GenomicElementExport.export_chrom_filtered_ge(args)
+        elif args.oformat == "TREbed":
+            GenomicElementExport.export_trebed(args)
         else:
             raise ValueError(f"Invalid output format: {args.oformat}")

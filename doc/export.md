@@ -13,11 +13,12 @@ The `export` subcommand provides functionality to export Genomic Element data to
 GenomicElementTool.py export <oformat> [OPTIONS]
 ```
 
-The export subcommand supports four output formats:
+The export subcommand supports five output formats:
 - `ExogeneousSequences`: Export genomic sequences to FASTA format
 - `CountTable`: Export statistical annotations as a count table (CSV)
 - `Heatmap`: Generate heatmap visualizations from track annotations
 - `ChromFilteredGE`: Filter regions by chromosome and export as BED file
+- `TREbed`: Annotate regions with forward and reverse TSS from GROcap/PROcap signals
 
 ## ExogeneousSequences
 
@@ -42,7 +43,7 @@ GenomicElementTool.py export ExogeneousSequences [OPTIONS]
 - `--region_file_type` (str)
   - Type of the region file
   - Required: Yes
-  - Valid types: `bed3`, `bed6`, `bed6gene`, `bedTRE`, etc.
+  - Valid types: `bed3`, `bed6`, `bed6gene`, `TREbed`, etc.
   - See `GenomicElements` documentation for full list
 
 - `--oheader` (str)
@@ -324,6 +325,64 @@ chr3    198295559
 ...
 ```
 
+## TREbed
+
+Examine the GROcap/PROcap signal track to annotate regions
+with both fwdTSS and revTSS. The output file is a TREbed
+file as defined by `PINTS`.
+
+### Usage
+
+```bash
+GenomicElementTool.py export TREbed [OPTIONS]
+```
+
+### Required Arguments
+
+- `--region_file_path` (str)
+  - Path to the region file (BED format)
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of the region file
+  - Required: Yes
+  - Valid types: `bed3`, `bed6`, `bed6gene`, etc.
+
+- `--pl_sig_track` (str)
+  - path to plus strand GROcap/PROcap __signal track__ 
+    npy/npz file.
+  - Required: Yes
+
+- `--mn_sig_track` (str)
+  - path to minus strand GROcap/PROcap __signal track__ 
+    npy/npz file.
+  - Required: Yes
+
+- `--opath` (str)
+  - Output path for the TREbed file
+  - Required: Yes
+
+### Output
+
+- **TREbed file**: Contains regions annotated with forward and reverse TSS positions
+  - Format follows the TREbed specification as defined by `PINTS`
+  - Each region includes `fwdTSS` and `revTSS` annotations based on GROcap/PROcap signal peaks
+  - Preserves original region coordinates with added TSS annotations
+
+### Example
+
+```bash
+GenomicElementTool.py export TREbed \
+    --region_file_path all_regions.bed6 \
+    --region_file_type bed6 \
+    --pl_sig_track all_regions.GROcap.pl.npz \
+    --mn_sig_track all_regions.GROcap.mn.npz \
+    --opath all_regions.TREbed
+```
+
+The pl and mn __signal tracks__ can be obtained using 
+`GenomicElementTool.py count_paired_bw`.
+
 ## Common Patterns
 
 ### Loading Annotations Before Export
@@ -348,7 +407,7 @@ GenomicElementTool.py export Heatmap \
     --negative False
 ```
 
-### Working with Multiple Samples when exporing CountTable
+### Working with Multiple Samples when exporting CountTable
 
 For count tables with multiple samples:
 
