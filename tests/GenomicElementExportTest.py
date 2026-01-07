@@ -48,7 +48,7 @@ class GenomicElementExportTest(unittest.TestCase):
         args = argparse.Namespace(
             region_file_path=self.__bed3_path,
             region_file_type="bed3",
-            genome_path=self.__fasta_path,
+            fasta_path=self.__fasta_path,
             oheader=os.path.join(self.__wdir, "test"),
             oformat="ExogeneousSequences",
         )

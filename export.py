@@ -64,7 +64,6 @@ class GenomicElementExport:
         
         parser.add_argument("--region_id_type", 
                             help="Type of the region id (default, gene_symbol).",
-                            required=True,
                             default="default",
                             type=str,
                             choices=["default", "gene_symbol"],
@@ -134,7 +133,7 @@ class GenomicElementExport:
     def export_exogeneous_sequences(args):
         ge = GenomicElements(args.region_file_path, 
                              args.region_file_type, 
-                             args.genome_path, 
+                             args.fasta_path, 
                              )
         ge.export_exogeneous_sequences(args.oheader + ".fa")
 
@@ -161,6 +160,9 @@ class GenomicElementExport:
 
     @staticmethod
     def export_count_table(args):
+        if len(args.sample_name) != len(args.stat_npy):
+            raise ValueError(f"Number of sample names ({len(args.sample_name)}) must match number of stat_npy files ({len(args.stat_npy)})")
+        
         ge = GenomicElements(args.region_file_path, 
                              args.region_file_type, 
                              None, 
@@ -181,6 +183,7 @@ class GenomicElementExport:
             output_df[sample_name] = ge.get_anno_arr(sample_name)
 
         output_df.to_csv(args.opath, 
+                         index=True,
                          )
 
     @staticmethod
@@ -264,6 +267,11 @@ class GenomicElementExport:
 
     @staticmethod
     def export_heatmap(args):
+        if len(args.title) != len(args.track_npy):
+            raise ValueError(f"Number of titles ({len(args.title)}) must match number of track_npy files ({len(args.track_npy)})")
+        if len(args.title) != len(args.negative):
+            raise ValueError(f"Number of titles ({len(args.title)}) must match number of negative flags ({len(args.negative)})")
+        
         ge = GenomicElements(args.region_file_path, 
                              args.region_file_type, 
                              None, 
