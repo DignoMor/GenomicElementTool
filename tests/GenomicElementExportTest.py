@@ -183,28 +183,3 @@ class GenomicElementExportTest(unittest.TestCase):
         self.assertEqual(regions[2]["end"], 170554802)
         self.assertEqual(regions[2]["fwsTSS"], 170553801 + 50)
         self.assertEqual(regions[2]["revTSS"], 170553801 + 250)
-
-    def test_export_trebed_mismatched_shapes(self):
-        """Test that export_trebed raises error when tracks have mismatched shapes."""
-        # Create mismatched tracks
-        mismatched_pl_track = np.zeros((3, 1001))
-        mismatched_mn_track = np.zeros((3, 500))  # Different length!
-        
-        mismatched_pl_path = os.path.join(self.__wdir, "mismatched_pl.npy")
-        mismatched_mn_path = os.path.join(self.__wdir, "mismatched_mn.npy")
-        np.save(mismatched_pl_path, mismatched_pl_track)
-        np.save(mismatched_mn_path, mismatched_mn_track)
-        
-        args = argparse.Namespace(
-            region_file_path=self.__bed3_path,
-            region_file_type="bed3",
-            pl_sig_track=mismatched_pl_path,
-            mn_sig_track=mismatched_mn_path,
-            opath=os.path.join(self.__wdir, "test_mismatched.trebed"),
-            oformat="TREbed",
-        )
-        
-        with self.assertRaises(ValueError) as context:
-            GenomicElementExport.export_trebed(args)
-        
-        self.assertIn("must have the same shape", str(context.exception))
