@@ -51,17 +51,14 @@ class CountSingleBw:
                                )
 
         if args.quantification_type == "full_track":
-            max_len = max([len(x) for x in output_list])
-            output_arr = np.zeros((len(output_list), max_len))
-            for i, x in enumerate(output_list):
-                output_arr[i, :len(x)] = x
+            genomic_elements.load_region_track_from_list("count", output_list)
         else:
-            output_arr = np.array(output_list).reshape(-1, 1)
+            genomic_elements.load_region_anno_from_arr("count", np.array(output_list))
 
         if args.opath.endswith(".npz"):
-            np.savez_compressed(args.opath, output_arr)
+            genomic_elements.save_anno_npz("count", args.opath)
         else:
-            np.save(args.opath, output_arr)
+            genomic_elements.save_anno_npy("count", args.opath)
 
 class CountPairedBw:
     @staticmethod
@@ -145,15 +142,12 @@ class CountPairedBw:
                                )
 
         if args.quantification_type == "full_track":
-            max_len = max([len(x) for x in output_list])
-            output_arr = np.zeros((len(output_list), max_len))
-            for i, x in enumerate(output_list):
-                output_arr[i, :len(x)] = x
+            genomic_elements.load_region_track_from_list("count", output_list)
         else:
-            output_arr = np.array(output_list).reshape(-1, 1)
+            genomic_elements.load_region_anno_from_arr("count", np.array(output_list))
 
         if args.opath.endswith(".npz"):
-            np.savez_compressed(args.opath, output_arr)
+            genomic_elements.save_anno_npz("count", args.opath)
         else:
-            np.save(args.opath, output_arr)
+            genomic_elements.save_anno_npy("count", args.opath)
     
