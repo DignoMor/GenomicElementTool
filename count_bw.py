@@ -50,9 +50,18 @@ class CountSingleBw:
                                                             ),
                                )
 
-        output_arr = np.array(output_list)
+        if args.quantification_type == "full_track":
+            max_len = max([len(x) for x in output_list])
+            output_arr = np.zeros((len(output_list), max_len))
+            for i, x in enumerate(output_list):
+                output_arr[i, :len(x)] = x
+        else:
+            output_arr = np.array(output_list).reshape(-1, 1)
 
-        np.save(args.opath, output_arr)
+        if args.opath.endswith(".npz"):
+            np.savez_compressed(args.opath, output_arr)
+        else:
+            np.save(args.opath, output_arr)
 
 class CountPairedBw:
     @staticmethod
@@ -66,8 +75,8 @@ class CountPairedBw:
 
         parser.add_argument("--bw_mn",
                             help="Minus strand bigwig file.",
+                            required=True,
                             type=str,
-                            default=None,
                             )
 
         parser.add_argument("--override_strand",
@@ -135,7 +144,16 @@ class CountPairedBw:
                                                             ),
                                )
 
-        output_arr = np.array(output_list)
+        if args.quantification_type == "full_track":
+            max_len = max([len(x) for x in output_list])
+            output_arr = np.zeros((len(output_list), max_len))
+            for i, x in enumerate(output_list):
+                output_arr[i, :len(x)] = x
+        else:
+            output_arr = np.array(output_list).reshape(-1, 1)
 
-        np.save(args.opath, output_arr)
+        if args.opath.endswith(".npz"):
+            np.savez_compressed(args.opath, output_arr)
+        else:
+            np.save(args.opath, output_arr)
     

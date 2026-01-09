@@ -47,9 +47,9 @@ class CountBwTest(unittest.TestCase):
 
         output = np.load(args.opath)
 
-        self.assertEqual(output.shape, (3,))
-        self.assertEqual(output[0], 123)
-        self.assertEqual(output[2], 1877)
+        self.assertEqual(output.shape, (3, 1))
+        self.assertEqual(output[0, 0], 123)
+        self.assertEqual(output[2, 0], 1877)
 
         args.quantification_type = "full_track"
         CountPairedBw.main(args)
@@ -66,6 +66,73 @@ class CountBwTest(unittest.TestCase):
 
         self.assertEqual(output.shape, (3, 1001))
         self.assertTrue(np.sum(output[0, :]) < 0)
+
+    def test_count_single_bw_npz(self):
+        args = self.get_count_single_bw_simple_args()
+        args.opath = os.path.join(self._test_path, "output.npz")
+        
+        CountSingleBw.main(args)
+        
+        # Load from .npz
+        data = np.load(args.opath)
+        self.assertIn("arr_0", data.files)
+        output = data["arr_0"]
+        self.assertEqual(output.shape, (3, 1))
+
+    def test_quantification_types(self):
+        # Test RPK in single bw
+        args = self.get_count_single_bw_simple_args()
+        args.quantification_type = "RPK"
+        CountSingleBw.main(args)
+        output_rpk = np.load(args.opath)
+        
+        args.quantification_type = "raw_count"
+        CountSingleBw.main(args)
+        output_raw = np.load(args.opath)
+        
+        # RPK = raw / len * 1000. Regions are 1001bp.
+        expected_rpk = output_raw / 1001 * 1000
+        np.testing.assert_allclose(output_rpk, expected_rpk, rtol=1e-5)
+
+    def test_heterogeneous_lengths_padding(self):
+        # Create a bed file with different lengths
+        hetero_bed = os.path.join(self._test_path, "hetero.bed")
+        with open(hetero_bed, "w") as f:
+            f.write("chr14\t75278325\t75279326\n") # 1001bp
+            f.write("chr17\t45894026\t45894526\n") # 500bp
+        
+        args = self.get_count_single_bw_simple_args()
+        args.region_file_path = hetero_bed
+        args.quantification_type = "full_track"
+        
+        CountSingleBw.main(args)
+        output = np.load(args.opath)
+        
+        # Max length should be 1001
+        self.assertEqual(output.shape, (2, 1001))
+        # Second region (500bp) should be zero-padded from index 500 onwards
+        self.assertTrue(np.all(output[1, 500:] == 0))
+        self.assertFalse(np.all(output[1, :500] == 0))
+
+    def test_flip_mn(self):
+        args = self.get_count_paired_bw_simple_args()
+        args.quantification_type = "full_track"
+        args.negative_mn = False
+        
+        # Test without flip
+        args.flip_mn = False
+        CountPairedBw.main(args)
+        output_no_flip = np.load(args.opath)
+        
+        # Test with flip
+        args.flip_mn = True
+        CountPairedBw.main(args)
+        output_flip = np.load(args.opath)
+        
+        # Region 0 is minus strand, so output_flip[1] should be flip(output_no_flip[1])
+        np.testing.assert_array_equal(output_flip[0], np.flip(output_no_flip[0]))
+        # Region 1 is plus strand, so no flip should occur
+        np.testing.assert_array_equal(output_flip[1], output_no_flip[1])
 
     def get_count_single_bw_simple_args(self):
         args = argparse.Namespace()
@@ -85,9 +152,9 @@ class CountBwTest(unittest.TestCase):
 
         output = np.load(args.opath)
 
-        self.assertEqual(output.shape, (3,))
-        self.assertEqual(output[0], -123)
-        self.assertEqual(output[2], -216)
+        self.assertEqual(output.shape, (3, 1))
+        self.assertEqual(output[0, 0], -123)
+        self.assertEqual(output[2, 0], -216)
 
         args.quantification_type = "full_track"
         CountSingleBw.main(args)
