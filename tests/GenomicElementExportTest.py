@@ -152,7 +152,7 @@ class GenomicElementExportTest(unittest.TestCase):
         self.assertEqual(len(trebed_bt), 3)
 
         # Get the regions to verify TSS positions
-        # Region 0: chr14:75278325-75279326, peak at relative pos 100 -> fwsTSS = 75278325 + 100 = 75278425
+        # Region 0: chr14:75278325-75279326, peak at relative pos 100 -> fwdTSS = 75278325 + 100 = 75278425
         # Region 0: peak at relative pos 300 -> revTSS = 75278325 + 300 = 75278625
         regions = list(trebed_bt.iter_regions())
         
@@ -161,25 +161,25 @@ class GenomicElementExportTest(unittest.TestCase):
         self.assertEqual(regions[0]["start"], 75278325)
         self.assertEqual(regions[0]["end"], 75279326)
         self.assertEqual(regions[0]["name"], "chr14:75278325-75279326")
-        # fwsTSS: start (75278325) + peak position (100) = 75278425
-        self.assertEqual(regions[0]["fwsTSS"], 75278325 + 100)
+        # fwdTSS: start (75278325) + peak position (100) = 75278425
+        self.assertEqual(regions[0]["fwdTSS"], 75278325 + 100)
         # revTSS: start (75278325) + peak position (300) = 75278625
         self.assertEqual(regions[0]["revTSS"], 75278325 + 300)
 
         # Verify second region (chr17:45894026-45895027)
-        # Region 1: peak at relative pos 200 -> fwsTSS = 45894026 + 200 = 45894226
+        # Region 1: peak at relative pos 200 -> fwdTSS = 45894026 + 200 = 45894226
         # Region 1: peak at relative pos 150 -> revTSS = 45894026 + 150 = 45894176
         self.assertEqual(regions[1]["chrom"], "chr17")
         self.assertEqual(regions[1]["start"], 45894026)
         self.assertEqual(regions[1]["end"], 45895027)
-        self.assertEqual(regions[1]["fwsTSS"], 45894026 + 200)
+        self.assertEqual(regions[1]["fwdTSS"], 45894026 + 200)
         self.assertEqual(regions[1]["revTSS"], 45894026 + 150)
 
         # Verify third region (chr6:170553801-170554802)
-        # Region 2: peak at relative pos 50 -> fwsTSS = 170553801 + 50 = 170553851
+        # Region 2: peak at relative pos 50 -> fwdTSS = 170553801 + 50 = 170553851
         # Region 2: peak at relative pos 250 -> revTSS = 170553801 + 250 = 170554051
         self.assertEqual(regions[2]["chrom"], "chr6")
         self.assertEqual(regions[2]["start"], 170553801)
         self.assertEqual(regions[2]["end"], 170554802)
-        self.assertEqual(regions[2]["fwsTSS"], 170553801 + 50)
+        self.assertEqual(regions[2]["fwdTSS"], 170553801 + 50)
         self.assertEqual(regions[2]["revTSS"], 170553801 + 250)

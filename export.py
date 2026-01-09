@@ -360,7 +360,7 @@ class GenomicElementExport:
         Export TREbed file with forward and reverse TSS annotations.
         
         Examines GROcap/PROcap signal tracks to find TSS positions:
-        - fwsTSS: Absolute genomic position of maximum signal in plus strand track
+        - fwdTSS: Absolute genomic position of maximum signal in plus strand track
         - revTSS: Absolute genomic position of maximum signal in minus strand track
         '''
         ge = GenomicElements(args.region_file_path, 
@@ -387,13 +387,13 @@ class GenomicElementExport:
             mn_track = mn_track_arr[i]
             
             # Find TSS positions (position with maximum signal, relative to region start)
-            # fwsTSS: forward TSS from plus strand track
+            # fwdTSS: forward TSS from plus strand track
             # revTSS: reverse TSS from minus strand track
-            fwsTSS_rel_pos = np.argmax(pl_track) if len(pl_track) > 0 else 0
+            fwdTSS_rel_pos = np.argmax(pl_track) if len(pl_track) > 0 else 0
             revTSS_rel_pos = np.argmax(mn_track) if len(mn_track) > 0 else 0
             
             # Convert to absolute genomic coordinates
-            fwsTSS = region["start"] + fwsTSS_rel_pos
+            fwdTSS = region["start"] + fwdTSS_rel_pos
             revTSS = region["start"] + revTSS_rel_pos
             
             # Create region name (default: chrom:start-end)
@@ -404,7 +404,7 @@ class GenomicElementExport:
                 "start": region["start"],
                 "end": region["end"],
                 "name": region_name,
-                "fwsTSS": fwsTSS,
+                "fwdTSS": fwdTSS,
                 "revTSS": revTSS,
             }
             output_dict_list.append(output_dict)
