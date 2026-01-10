@@ -89,7 +89,7 @@ Pad regions while conserving the order of elements in Genomic Elements files.
 GenomicElementTool.py pad_region [OPTIONS]
 ```
 
-This program differs from standard padding tools in that it preserves the order of elements in Genomic Elements files.
+This program differs from standard padding tools in that it preserves the order of elements in Genomic Elements files. See [pad_region.md](pad_region.md) for detailed documentation.
 
 ### bed2tssbed
 
