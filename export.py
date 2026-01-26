@@ -383,8 +383,8 @@ class GenomicElementExport:
         
         output_dict_list = []
         for i, region in enumerate(ge.get_region_bed_table().iter_regions()):
-            pl_track = pl_track_arr[i]
-            mn_track = mn_track_arr[i]
+            pl_track = np.abs(pl_track_arr[i])
+            mn_track = np.abs(mn_track_arr[i])
             
             # Find TSS positions (position with maximum signal, relative to region start)
             # fwdTSS: forward TSS from plus strand track

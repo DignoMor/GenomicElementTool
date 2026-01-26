@@ -183,3 +183,34 @@ class GenomicElementExportTest(unittest.TestCase):
         self.assertEqual(regions[2]["end"], 170554802)
         self.assertEqual(regions[2]["fwdTSS"], 170553801 + 50)
         self.assertEqual(regions[2]["revTSS"], 170553801 + 250)
+
+    def test_export_trebed_negative_track(self):
+        # Create negative tracks
+        neg_mn_track_path = os.path.join(self.__wdir, "neg_mn_track.npz")
+        
+        # All regions 1001bp
+        mn_track = np.zeros((3, 1001))
+        mn_track[0, 300] = -15.0  # Peak magnitude at 300
+        mn_track[1, 150] = -20.0  # Peak magnitude at 150
+        mn_track[2, 250] = -10.0  # Peak magnitude at 250
+        
+        np.savez(neg_mn_track_path, mn_track)
+        
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            pl_sig_track=self.__pl_track_path,
+            mn_sig_track=neg_mn_track_path,
+            opath=os.path.join(self.__wdir, "test_neg.trebed"),
+            oformat="TREbed",
+        )
+        GenomicElementExport.export_trebed(args)
+
+        # Verify TSS positions
+        trebed_bt = GenomicElements.BedTableTREBed(enable_sort=False)
+        trebed_bt.load_from_file(args.opath)
+        regions = list(trebed_bt.iter_regions())
+        
+        # Region 0: chr14:75278325-75279326
+        # mn peak at 300 -> revTSS = 75278325 + 300 = 75278625
+        self.assertEqual(regions[0]["revTSS"], 75278325 + 300)
