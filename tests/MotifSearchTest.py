@@ -66,15 +66,15 @@ class MotifSearchTest(unittest.TestCase):
                                             os.path.join(args.output_header + ".lexA.npy"), 
                                             )
 
-        crp_track = output_ge.get_anno_arr("CRP")
-        lexA_track = output_ge.get_anno_arr("LexA")
+        crp_track_list = output_ge.get_anno_list("CRP")
+        lexA_track_list = output_ge.get_anno_list("LexA")
 
-        self.assertEqual(crp_track.shape[0], 3)
-        self.assertEqual(lexA_track.shape[1], 1001)
+        self.assertEqual(len(crp_track_list), 3)
+        self.assertEqual(len(lexA_track_list[0]), 1001)
 
         # Test that scores are reasonable (not all zeros or inf)
-        self.assertFalse(np.all(crp_track == 0))
-        self.assertFalse(np.all(np.isinf(crp_track)))
+        self.assertFalse(all([np.all(t == 0) for t in crp_track_list]))
+        self.assertFalse(all([np.all(np.isinf(t)) for t in crp_track_list]))
     
     def test_main_reverse_strand(self):
         """Test motif search with reverse strand (strand='-')"""
@@ -92,14 +92,14 @@ class MotifSearchTest(unittest.TestCase):
                                             os.path.join(args.output_header + ".crp.npy"), 
                                             )
 
-        crp_track = output_ge.get_anno_arr("CRP")
+        crp_track_list = output_ge.get_anno_list("CRP")
 
-        self.assertEqual(crp_track.shape[0], 3)
-        self.assertEqual(crp_track.shape[1], 1001)
+        self.assertEqual(len(crp_track_list), 3)
+        self.assertEqual(len(crp_track_list[0]), 1001)
         
         # Test that scores are reasonable
-        self.assertFalse(np.all(crp_track == 0))
-        self.assertFalse(np.all(np.isinf(crp_track)))
+        self.assertFalse(all([np.all(t == 0) for t in crp_track_list]))
+        self.assertFalse(all([np.all(np.isinf(t)) for t in crp_track_list]))
     
     def test_main_both_strands(self):
         """Test motif search with both strands (strand='both')"""
@@ -117,14 +117,14 @@ class MotifSearchTest(unittest.TestCase):
                                             os.path.join(args.output_header + ".crp.npy"), 
                                             )
 
-        crp_track = output_ge.get_anno_arr("CRP")
+        crp_track_list = output_ge.get_anno_list("CRP")
 
-        self.assertEqual(crp_track.shape[0], 3)
-        self.assertEqual(crp_track.shape[1], 1001)
+        self.assertEqual(len(crp_track_list), 3)
+        self.assertEqual(len(crp_track_list[0]), 1001)
         
         # Test that scores are reasonable
-        self.assertFalse(np.all(crp_track == 0))
-        self.assertFalse(np.all(np.isinf(crp_track)))
+        self.assertFalse(all([np.all(t == 0) for t in crp_track_list]))
+        self.assertFalse(all([np.all(np.isinf(t)) for t in crp_track_list]))
         
         # Test that 'both' gives scores >= forward strand scores
         args_fwd = self.get_motif_search_simple_args()
@@ -137,10 +137,11 @@ class MotifSearchTest(unittest.TestCase):
         output_ge_fwd.load_region_anno_from_npy("CRP", 
                                                  os.path.join(args_fwd.output_header + ".crp.npy"), 
                                                  )
-        crp_track_fwd = output_ge_fwd.get_anno_arr("CRP")
+        crp_track_fwd_list = output_ge_fwd.get_anno_list("CRP")
         
         # 'both' should give max of forward and reverse, so should be >= forward
-        self.assertTrue(np.all(crp_track >= crp_track_fwd))
+        for t_both, t_fwd in zip(crp_track_list, crp_track_fwd_list):
+            self.assertTrue(np.all(t_both >= t_fwd))
     
     def get_filter_motif_score_simple_args(self):
         args = argparse.Namespace()
@@ -173,4 +174,4 @@ class MotifSearchTest(unittest.TestCase):
                                               args.output_header + ".motif.npy",
                                               )
         
-        self.assertEqual(filtered_ge.get_anno_arr("motif").shape[0], 1)
+        self.assertEqual(len(filtered_ge.get_anno_list("motif")), 1)

@@ -55,13 +55,13 @@ class Track2TssBed:
                                            fasta_path=None, 
                                            )
         genomic_elements.load_region_anno_from_npy("track", args.track)
-        track_arr = genomic_elements.get_anno_arr("track")
+        track_list = genomic_elements.get_anno_list("track")
 
         region_bt = genomic_elements.get_region_bed_table()
         output_dict_list = []
 
         for i, region in enumerate(region_bt.iter_regions()):
-            track = track_arr[i]
+            track = track_list[i]
 
             output_site = Track2TssBed.get_output_site_coord(region, track, args.output_site)
             output_region = region.to_dict()

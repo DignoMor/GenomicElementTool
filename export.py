@@ -202,7 +202,7 @@ class GenomicElementExport:
                                  )
 
         for sample_name in args.sample_name:
-            output_df[sample_name] = ge.get_anno_arr(sample_name)
+            output_df[sample_name] = np.array(ge.get_anno_list(sample_name)).flatten()
 
         output_df.to_csv(args.opath, 
                          index=True,
@@ -371,20 +371,16 @@ class GenomicElementExport:
         ge.load_region_anno_from_npy("pl_track", args.pl_sig_track)
         ge.load_region_anno_from_npy("mn_track", args.mn_sig_track)
         
-        pl_track_arr = ge.get_anno_arr("pl_track")
-        mn_track_arr = ge.get_anno_arr("mn_track")
-        
-        if pl_track_arr.shape != mn_track_arr.shape:
-            raise ValueError(f"Plus and minus strand tracks must have the same shape. "
-                           f"Plus: {pl_track_arr.shape}, Minus: {mn_track_arr.shape}")
+        pl_track_list = ge.get_anno_list("pl_track")
+        mn_track_list = ge.get_anno_list("mn_track")
         
         # Create TREbed output
         trebed_bt = GenomicElements.BedTableTREBed(enable_sort=False)
         
         output_dict_list = []
         for i, region in enumerate(ge.get_region_bed_table().iter_regions()):
-            pl_track = np.abs(pl_track_arr[i])
-            mn_track = np.abs(mn_track_arr[i])
+            pl_track = np.abs(pl_track_list[i])
+            mn_track = np.abs(mn_track_list[i])
             
             # Find TSS positions (position with maximum signal, relative to region start)
             # fwdTSS: forward TSS from plus strand track

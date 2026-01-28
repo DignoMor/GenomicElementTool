@@ -139,8 +139,8 @@ class MotifSearch:
                                            )
         genomic_elements.load_region_anno_from_npy("motif", args.motif_search_npy)
 
-        motif_track = genomic_elements.get_anno_arr("motif")
-        filter_base_score = motif_track[:, args.filter_base]
+        motif_track_list = genomic_elements.get_anno_list("motif")
+        filter_base_score = np.array([m[args.filter_base] for m in motif_track_list])
         filter = (filter_base_score > args.min_score) & (filter_base_score < args.max_score)
 
         output_ge = genomic_elements.apply_logical_filter(filter, 

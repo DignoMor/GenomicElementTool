@@ -57,7 +57,7 @@ Annotations are NumPy arrays stored in `.npy` files. The first dimension of the 
 - **track**: Store signal tracks for each element. The second dimension is larger than 1. These are used to store continuous signals across regions (e.g., ChIP-seq signals, motif scores, etc.).
 - **stat**: Store statistics for each element. The second dimension is of size 1. These are used to store single values per region (e.g., expression levels, peak scores, etc.).
 
-## Subcommands
+## Subcommands for All GenomicElements data
 
 GenomicElementTool provides the following subcommands:
 
@@ -100,16 +100,6 @@ GenomicElementTool.py bed2tssbed [OPTIONS]
 ```
 
 Converts a BED file containing gene regions to a BED file containing TSS coordinates.
-
-### onehot
-
-One-hot encode sequences. Only supports elements of the same size.
-
-```bash
-GenomicElementTool.py onehot [OPTIONS]
-```
-
-Converts DNA sequences to one-hot encoded representations. All regions must have the same length.
 
 ### motif_search
 
@@ -160,6 +150,18 @@ GenomicElementTool.py import [OPTIONS]
 ```
 
 Imports data from various formats into the Genomic Element structure.
+
+## Subcommands for length-homogeneous GenomicElements data
+
+### onehot
+
+One-hot encode sequences. Only supports elements of the same size.
+
+```bash
+GenomicElementTool.py onehot [OPTIONS]
+```
+
+Converts DNA sequences to one-hot encoded representations. All regions must have the same length.
 
 ## Getting Help
 

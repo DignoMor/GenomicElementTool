@@ -149,13 +149,13 @@ ge = GenomicElements(
 # Load motif scores
 ge.load_region_anno_from_npy("Motif1", "my_motif_search.Motif1.npy")
 
-# Get scores as numpy array
-scores = ge.get_anno_arr("Motif1")
-# Shape: (num_regions, region_length)
+# Get scores as list of numpy arrays
+scores = ge.get_anno_list("Motif1")
+# Length: num_regions, each element: array of shape (region_length,)
 
 # Find best match position in first region
 best_pos = np.argmax(scores[0])
-best_score = scores[0, best_pos]
+best_score = scores[0][best_pos]
 ```
 
 ## Dependencies
