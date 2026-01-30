@@ -90,11 +90,8 @@ class MotifSearch:
                                                                strand=args.strand, 
                                                                )
                 output_score_anno_list.append(motif_score_track)
-            output_score_anno_arr = np.array(output_score_anno_list)
+            genomic_elements.load_region_track_from_list(motif, output_score_anno_list)
 
-            genomic_elements.load_region_anno_from_arr(motif, 
-                                                       output_score_anno_arr, 
-                                                       )
             genomic_elements.save_anno_npy(motif, 
                                            args.output_header + "." + motif + ".npy", 
                                            )
