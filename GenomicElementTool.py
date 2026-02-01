@@ -7,6 +7,7 @@ from pad_region import PadRegion
 from bed2tss_bed import Bed2TssBed
 from one_hot import OneHot
 from motif_search import MotifSearch
+from filter_motif_score import FilterMotifScore
 from track2tss_bed import Track2TssBed
 from export import GenomicElementExport
 from GenomicElementImport import GenomicElementImport
@@ -63,7 +64,7 @@ class GenomicElementTool:
                                                           help="Filter motif search scores.",
                                                           )
         
-        MotifSearch.set_filter_motif_score_args(parser_filter_motif_score)
+        FilterMotifScore.set_parser(parser_filter_motif_score)
 
         parser_export = subparsers.add_parser("export", 
                                               help="Export to other formats.", 
@@ -94,7 +95,7 @@ class GenomicElementTool:
         elif args.subcommand == "track2tss_bed":
             Track2TssBed.main(args)
         elif args.subcommand == "filter_motif_score":
-            MotifSearch.filter_motif_score_main(args)
+            FilterMotifScore.main(args)
         elif args.subcommand == "export":
             GenomicElementExport.main(args)
         elif args.subcommand == "import":

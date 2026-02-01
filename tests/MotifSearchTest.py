@@ -142,36 +142,6 @@ class MotifSearchTest(unittest.TestCase):
         # 'both' should give max of forward and reverse, so should be >= forward
         for t_both, t_fwd in zip(crp_track_list, crp_track_fwd_list):
             self.assertTrue(np.all(t_both >= t_fwd))
-    
-    def get_filter_motif_score_simple_args(self):
-        args = argparse.Namespace()
 
-        args.subcommand = "filter_motif_score"
-        args.region_file_path = self._bed6_path
-        args.region_file_type = "bed6"
-        args.motif_search_npy = os.path.join(self._test_path, "three_genes.motif_search.crp.npy")
-        args.output_header = os.path.join(self._test_path, "three_genes.crp.filtered")
-        args.filter_base = 649
-        args.min_score = 0.0
-        args.max_score = np.inf
-
-        return args
-        
-    def test_filter_motif_score(self):
-        args = self.get_motif_search_simple_args()
-        args.strand = "-"
-        MotifSearch.main(args)
-
-        args = self.get_filter_motif_score_simple_args()
-        MotifSearch.filter_motif_score_main(args)
-
-        filtered_ge = GenomicElements(region_file_path=args.output_header + ".bed",
-                                      region_file_type=args.region_file_type,
-                                      fasta_path=None, 
-                                      )
-        
-        filtered_ge.load_region_anno_from_npy("motif", 
-                                              args.output_header + ".motif.npy",
-                                              )
-        
-        self.assertEqual(len(filtered_ge.get_anno_list("motif")), 1)
+if __name__ == "__main__":
+    unittest.main()
