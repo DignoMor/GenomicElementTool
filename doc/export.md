@@ -5,7 +5,7 @@ description: Export Genomic Element data to various output formats
 
 # export Subcommand
 
-The `export` subcommand provides functionality to export Genomic Element data to various output formats including FASTA sequences, count tables, heatmaps, and filtered region files.
+The `export` subcommand provides functionality to export Genomic Element data to various output formats including FASTA sequences, count tables, heatmaps, filtered region files, and merged genomic elements.
 
 ## Usage
 
@@ -13,12 +13,13 @@ The `export` subcommand provides functionality to export Genomic Element data to
 GenomicElementTool.py export <oformat> [OPTIONS]
 ```
 
-The export subcommand supports five output formats:
+The export subcommand supports the following output formats:
 - `ExogeneousSequences`: Export genomic sequences to FASTA format
 - `CountTable`: Export statistical annotations as a count table (CSV)
 - `Heatmap`: Generate heatmap visualizations from track annotations
 - `ChromFilteredGE`: Filter regions by chromosome and export as BED file
 - `TREbed`: Annotate regions with forward and reverse TSS from GROcap/PROcap signals
+- `MergedGE`: Merge multiple Genomic Element files into one
 
 ## ExogeneousSequences
 
@@ -382,6 +383,68 @@ GenomicElementTool.py export TREbed \
 
 The pl and mn __signal tracks__ can be obtained using 
 `GenomicElementTool.py count_paired_bw`.
+
+## MergedGE
+
+Merge two Genomic Element DataSet into a single 
+Genomic Element DataSet. 
+This combines the regions from both input files 
+into one output Region file.
+
+### Usage
+
+```bash
+GenomicElementTool.py export MergedGE [OPTIONS]
+```
+
+### Required Arguments
+
+- `--left_region_file_path` (str)
+  - Path to the first region file.
+  - Required: Yes
+
+- `--right_region_file_path` (str)
+  - Path to the second region file.
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of the region files.
+  - Required: Yes
+
+- `--anno_name` (str)
+  - Name of the annotation tracks to be merged.
+  - Can be multiple.
+
+- `--left_anno_path` (str)
+  - Path to the annotation track of the first GE.
+  - Can be multiple, must match the number of `anno_name`.
+
+- `--right_anno_path` (str)
+  - Path to the annotation track of the second GE.
+  - Can be multiple, must match the number of `anno_name`.
+
+- `--oheader` (str)
+  - Output header for the region file and annotations.
+  - Required: Yes
+
+### Output
+
+- **Region file**: A single region file containing all regions 
+  from the input files and sorted by coordinates. File type 
+  is determined by `region_file_type`.
+
+### Example
+
+```bash
+GenomicElementTool.py export MergedGE \
+    --left_region_file_path file1.bed6 \
+    --right_region_file_path file2.bed6 \
+    --anno_name example_anno \
+    --left_anno_path file1.anno.npy \
+    --right_anno_path file2.anno.npy \
+    --region_file_type bed6 \
+    --oheader merged
+```
 
 ## Common Patterns
 

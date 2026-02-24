@@ -37,6 +37,11 @@ class GenomicElementExport:
                                              )
         GenomicElementExport.set_parser_trebed(parser_trebed)
 
+        parser_merged_ge = subparsers.add_parser("MergedGE",
+                                                help="Merge two Genomic Element datasets.",
+                                                )
+        GenomicElementExport.set_parser_merged_ge(parser_merged_ge)
+
     @staticmethod
     def set_parser_exogeneous_sequences(parser):
         GenomicElements.set_parser_genome(parser)
@@ -148,8 +153,52 @@ class GenomicElementExport:
         return parser
 
     @staticmethod
+    def set_parser_merged_ge(parser):
+        parser.add_argument("--left_region_file_path",
+                            help="Path to the left region file.",
+                            required=True,
+                            type=str,
+                            )
+        parser.add_argument("--right_region_file_path",
+                            help="Path to the right region file.",
+                            required=True,
+                            type=str,
+                            )
+        parser.add_argument("--region_file_type",
+                            help="Type of the region file. "
+                                 "Valid types: {}".format(
+                                     list(GenomicElements.get_region_file_suffix2class_dict().keys())
+                                     ),
+                            required=True,
+                            default="bed3",
+                            type=str,
+                            choices=GenomicElements.get_region_file_suffix2class_dict().keys(),
+                            )
+        parser.add_argument("--anno_name",
+                            help="Annotation name to merge. Can be specified multiple times.",
+                            action="append",
+                            required=True,
+                            )
+        parser.add_argument("--left_anno_path",
+                            help="Path to left annotation npy/npz file. Can be specified multiple times.",
+                            action="append",
+                            required=True,
+                            )
+        parser.add_argument("--right_anno_path",
+                            help="Path to right annotation npy/npz file. Can be specified multiple times.",
+                            action="append",
+                            required=True,
+                            )
+        parser.add_argument("--oheader",
+                            help="Output header for merged files.",
+                            required=True,
+                            type=str,
+                            )
+        return parser
+
+    @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE", "TREbed"]
+        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE", "TREbed", "MergedGE"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -409,6 +458,45 @@ class GenomicElementExport:
         trebed_bt.write(args.opath)
 
     @staticmethod
+    def export_merged_ge(args):
+        if len(args.anno_name) != len(args.left_anno_path):
+            raise ValueError(
+                f"Number of anno_name ({len(args.anno_name)}) must match "
+                f"number of left_anno_path ({len(args.left_anno_path)})"
+            )
+        if len(args.anno_name) != len(args.right_anno_path):
+            raise ValueError(
+                f"Number of anno_name ({len(args.anno_name)}) must match "
+                f"number of right_anno_path ({len(args.right_anno_path)})"
+            )
+
+        left_ge = GenomicElements(args.left_region_file_path,
+                                  args.region_file_type,
+                                  None,
+                                  )
+        right_ge = GenomicElements(args.right_region_file_path,
+                                   args.region_file_type,
+                                   None,
+                                   )
+
+        for anno_name, left_anno_path, right_anno_path in zip(args.anno_name,
+                                                               args.left_anno_path,
+                                                               args.right_anno_path):
+            left_ge.load_region_anno_from_npy(anno_name, left_anno_path)
+            right_ge.load_region_anno_from_npy(anno_name, right_anno_path)
+
+        output_region_path = args.oheader + "." + args.region_file_type
+        merged_ge = GenomicElements.merge_genomic_elements(left_ge,
+                                                           right_ge,
+                                                           output_region_path,
+                                                           args.anno_name,
+                                                           sort_new_ge=True,
+                                                           )
+
+        for anno_name in args.anno_name:
+            merged_ge.save_anno_npy(anno_name, args.oheader + "." + anno_name + ".npy")
+
+    @staticmethod
     def main(args):
         if args.oformat == "ExogeneousSequences":
             GenomicElementExport.export_exogeneous_sequences(args)
@@ -420,5 +508,7 @@ class GenomicElementExport:
             GenomicElementExport.export_chrom_filtered_ge(args)
         elif args.oformat == "TREbed":
             GenomicElementExport.export_trebed(args)
+        elif args.oformat == "MergedGE":
+            GenomicElementExport.export_merged_ge(args)
         else:
             raise ValueError(f"Invalid output format: {args.oformat}")

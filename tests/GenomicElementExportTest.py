@@ -214,3 +214,59 @@ class GenomicElementExportTest(unittest.TestCase):
         # Region 0: chr14:75278325-75279326
         # mn peak at 300 -> revTSS = 75278325 + 300 = 75278625
         self.assertEqual(regions[0]["revTSS"], 75278325 + 300)
+
+    def test_export_merged_ge(self):
+        left_region_path = os.path.join(self.__wdir, "merge_left.bed3")
+        right_region_path = os.path.join(self.__wdir, "merge_right.bed3")
+
+        left_bt = BedTable3(enable_sort=False)
+        left_bt.load_from_dataframe(pd.DataFrame({
+            "chrom": ["chr2", "chr2"],
+            "start": [100, 200],
+            "end": [110, 210],
+        }))
+        left_bt.write(left_region_path)
+
+        right_bt = BedTable3(enable_sort=False)
+        right_bt.load_from_dataframe(pd.DataFrame({
+            "chrom": ["chr1", "chr1"],
+            "start": [50, 300],
+            "end": [60, 310],
+        }))
+        right_bt.write(right_region_path)
+
+        left_stat_path = os.path.join(self.__wdir, "left.stat.npy")
+        right_stat_path = os.path.join(self.__wdir, "right.stat.npy")
+        left_track_path = os.path.join(self.__wdir, "left.track.npy")
+        right_track_path = os.path.join(self.__wdir, "right.track.npy")
+        np.save(left_stat_path, np.array([100, 200]))
+        np.save(right_stat_path, np.array([10, 20]))
+        np.save(left_track_path, np.array([[1] * 10, [2] * 10]))
+        np.save(right_track_path, np.array([[3] * 10, [4] * 10]))
+
+        oheader = os.path.join(self.__wdir, "merged")
+        args = argparse.Namespace(
+            left_region_file_path=left_region_path,
+            right_region_file_path=right_region_path,
+            region_file_type="bed3",
+            anno_name=["stat", "track"],
+            left_anno_path=[left_stat_path, left_track_path],
+            right_anno_path=[right_stat_path, right_track_path],
+            oheader=oheader,
+            oformat="MergedGE",
+        )
+        GenomicElementExport.export_merged_ge(args)
+
+        merged_region_path = oheader + ".bed3"
+        merged_bt = BedTable3()
+        merged_bt.load_from_file(merged_region_path)
+        merged_df = merged_bt.to_dataframe()
+        self.assertEqual(merged_df.iloc[0]["chrom"], "chr1")
+        self.assertEqual(merged_df.iloc[1]["chrom"], "chr1")
+        self.assertEqual(merged_df.iloc[2]["chrom"], "chr2")
+        self.assertEqual(merged_df.iloc[3]["chrom"], "chr2")
+
+        stat_arr = np.load(oheader + ".stat.npy")
+        track_arr = np.load(oheader + ".track.npy")
+        np.testing.assert_array_equal(stat_arr.reshape(-1,), np.array([10, 20, 100, 200]))
+        np.testing.assert_array_equal(track_arr[:, 0], np.array([3, 4, 1, 2]))

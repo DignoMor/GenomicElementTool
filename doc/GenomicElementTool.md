@@ -139,7 +139,7 @@ Export to other formats.
 GenomicElementTool.py export [OPTIONS]
 ```
 
-Exports Genomic Element data to various output formats.
+Exports Genomic Element data to various output formats including FASTA sequences, count tables, heatmaps, and merged genomic elements. See [export.md](export.md) for detailed documentation.
 
 ### import
 
