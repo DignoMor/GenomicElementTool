@@ -54,8 +54,8 @@ class Track2TssBed:
                                            region_file_type=args.region_file_type,
                                            fasta_path=None, 
                                            )
-        genomic_elements.load_region_anno_from_npy("track", args.track)
-        track_list = genomic_elements.get_anno_list("track")
+        genomic_elements.load_region_anno_from_npy("track", args.track, anno_type="track")
+        track_list = genomic_elements.get_track_list("track")
 
         region_bt = genomic_elements.get_region_bed_table()
         output_dict_list = []

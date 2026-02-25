@@ -53,7 +53,7 @@ class CountSingleBw:
         if args.quantification_type == "full_track":
             genomic_elements.load_region_track_from_list("count", output_list)
         else:
-            genomic_elements.load_region_anno_from_arr("count", np.array(output_list))
+            genomic_elements.load_region_stat_from_arr("count", np.array(output_list))
 
         if args.opath.endswith(".npz"):
             genomic_elements.save_anno_npz("count", args.opath)
@@ -144,7 +144,7 @@ class CountPairedBw:
         if args.quantification_type == "full_track":
             genomic_elements.load_region_track_from_list("count", output_list)
         else:
-            genomic_elements.load_region_anno_from_arr("count", np.array(output_list))
+            genomic_elements.load_region_stat_from_arr("count", np.array(output_list))
 
         if args.opath.endswith(".npz"):
             genomic_elements.save_anno_npz("count", args.opath)

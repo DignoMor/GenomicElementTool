@@ -40,9 +40,9 @@ class FilterMotifScore:
                                            region_file_type=args.region_file_type,
                                            fasta_path=None, 
                                            )
-        genomic_elements.load_region_anno_from_npy("motif", args.motif_search_npy)
+        genomic_elements.load_region_anno_from_npy("motif", args.motif_search_npy, anno_type="track")
 
-        motif_track_list = genomic_elements.get_anno_list("motif")
+        motif_track_list = genomic_elements.get_track_list("motif")
         filter_base_score = np.array([m[args.filter_base] for m in motif_track_list])
         filter_mask = (filter_base_score > args.min_score) & (filter_base_score < args.max_score)
 

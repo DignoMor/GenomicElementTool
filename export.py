@@ -189,6 +189,12 @@ class GenomicElementExport:
                             action="append",
                             required=True,
                             )
+        parser.add_argument("--anno_type",
+                            help="Annotation type for each annotation. Can be specified multiple times.",
+                            action="append",
+                            required=True,
+                            choices=["track", "stat", "mask", "array"],
+                            )
         parser.add_argument("--oheader",
                             help="Output header for merged files.",
                             required=True,
@@ -240,7 +246,7 @@ class GenomicElementExport:
                              )
 
         for sample_name, stat_npy in zip(args.sample_name, args.stat_npy):
-            ge.load_region_anno_from_npy(sample_name, stat_npy)
+            ge.load_region_anno_from_npy(sample_name, stat_npy, anno_type="stat")
         
         region_names = []
         for region in ge.get_region_bed_table().iter_regions():
@@ -251,7 +257,7 @@ class GenomicElementExport:
                                  )
 
         for sample_name in args.sample_name:
-            output_df[sample_name] = np.array(ge.get_anno_list(sample_name)).flatten()
+            output_df[sample_name] = ge.get_stat_arr(sample_name).reshape(-1,)
 
         output_df.to_csv(args.opath, 
                          index=True,
@@ -283,6 +289,14 @@ class GenomicElementExport:
             vmax = 1
 
         return vmin, vmax
+
+    @staticmethod
+    def track_list_to_arr(track_list):
+        max_len = max(len(track) for track in track_list) if len(track_list) > 0 else 0
+        track_arr = np.zeros((len(track_list), max_len))
+        for i, track in enumerate(track_list):
+            track_arr[i, :len(track)] = track
+        return track_arr
 
     @staticmethod
     def plot_heatmap_image(ax, track_arr, sort_idx, plot_cmap, 
@@ -348,9 +362,12 @@ class GenomicElementExport:
                              None, 
                              )
         for track_title, track_npy in zip(args.title, args.track_npy):
-            ge.load_region_anno_from_npy(track_title, track_npy)
+            ge.load_region_anno_from_npy(track_title, track_npy, anno_type="track")
 
-        track_arr_list = [np.abs(ge.get_anno_arr(track_title)) for track_title in args.title]
+        track_arr_list = [
+            np.abs(GenomicElementExport.track_list_to_arr(ge.get_track_list(track_title)))
+            for track_title in args.title
+        ]
 
         fig, ax = plt.subplots(2, len(args.title), 
                                figsize=(4 * len(args.title), 8),
@@ -362,7 +379,7 @@ class GenomicElementExport:
         sort_idx = np.argsort(np.concatenate(track_arr_list, axis=1).max(axis=1))
 
         for ind, track_title in enumerate(args.title):
-            track_arr = np.abs(ge.get_anno_arr(track_title))
+            track_arr = np.abs(GenomicElementExport.track_list_to_arr(ge.get_track_list(track_title)))
 
             if args.negative[ind]:
                 plot_cmap = "Blues"
@@ -417,11 +434,11 @@ class GenomicElementExport:
                              None, 
                              )
         
-        ge.load_region_anno_from_npy("pl_track", args.pl_sig_track)
-        ge.load_region_anno_from_npy("mn_track", args.mn_sig_track)
+        ge.load_region_anno_from_npy("pl_track", args.pl_sig_track, anno_type="track")
+        ge.load_region_anno_from_npy("mn_track", args.mn_sig_track, anno_type="track")
         
-        pl_track_list = ge.get_anno_list("pl_track")
-        mn_track_list = ge.get_anno_list("mn_track")
+        pl_track_list = ge.get_track_list("pl_track")
+        mn_track_list = ge.get_track_list("mn_track")
         
         # Create TREbed output
         trebed_bt = GenomicElements.BedTableTREBed(enable_sort=False)
@@ -469,6 +486,11 @@ class GenomicElementExport:
                 f"Number of anno_name ({len(args.anno_name)}) must match "
                 f"number of right_anno_path ({len(args.right_anno_path)})"
             )
+        if len(args.anno_name) != len(args.anno_type):
+            raise ValueError(
+                f"Number of anno_name ({len(args.anno_name)}) must match "
+                f"number of anno_type ({len(args.anno_type)})"
+            )
 
         left_ge = GenomicElements(args.left_region_file_path,
                                   args.region_file_type,
@@ -479,11 +501,12 @@ class GenomicElementExport:
                                    None,
                                    )
 
-        for anno_name, left_anno_path, right_anno_path in zip(args.anno_name,
-                                                               args.left_anno_path,
-                                                               args.right_anno_path):
-            left_ge.load_region_anno_from_npy(anno_name, left_anno_path)
-            right_ge.load_region_anno_from_npy(anno_name, right_anno_path)
+        for anno_name, anno_type, left_anno_path, right_anno_path in zip(args.anno_name,
+                                                                          args.anno_type,
+                                                                          args.left_anno_path,
+                                                                          args.right_anno_path):
+            left_ge.load_region_anno_from_npy(anno_name, left_anno_path, anno_type=anno_type)
+            right_ge.load_region_anno_from_npy(anno_name, right_anno_path, anno_type=anno_type)
 
         output_region_path = args.oheader + "." + args.region_file_type
         merged_ge = GenomicElements.merge_genomic_elements(left_ge,

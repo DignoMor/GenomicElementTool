@@ -60,14 +60,16 @@ class MotifSearchTest(unittest.TestCase):
         
         output_ge.load_region_anno_from_npy("CRP", 
                                             os.path.join(args.output_header + ".crp.npy"), 
+                                            anno_type="track",
                                             )
 
         output_ge.load_region_anno_from_npy("LexA", 
                                             os.path.join(args.output_header + ".lexA.npy"), 
+                                            anno_type="track",
                                             )
 
-        crp_track_list = output_ge.get_anno_list("CRP")
-        lexA_track_list = output_ge.get_anno_list("LexA")
+        crp_track_list = output_ge.get_track_list("CRP")
+        lexA_track_list = output_ge.get_track_list("LexA")
 
         self.assertEqual(len(crp_track_list), 3)
         self.assertEqual(len(lexA_track_list[0]), 1001)
@@ -90,9 +92,10 @@ class MotifSearchTest(unittest.TestCase):
         
         output_ge.load_region_anno_from_npy("CRP", 
                                             os.path.join(args.output_header + ".crp.npy"), 
+                                            anno_type="track",
                                             )
 
-        crp_track_list = output_ge.get_anno_list("CRP")
+        crp_track_list = output_ge.get_track_list("CRP")
 
         self.assertEqual(len(crp_track_list), 3)
         self.assertEqual(len(crp_track_list[0]), 1001)
@@ -115,9 +118,10 @@ class MotifSearchTest(unittest.TestCase):
         
         output_ge.load_region_anno_from_npy("CRP", 
                                             os.path.join(args.output_header + ".crp.npy"), 
+                                            anno_type="track",
                                             )
 
-        crp_track_list = output_ge.get_anno_list("CRP")
+        crp_track_list = output_ge.get_track_list("CRP")
 
         self.assertEqual(len(crp_track_list), 3)
         self.assertEqual(len(crp_track_list[0]), 1001)
@@ -136,8 +140,9 @@ class MotifSearchTest(unittest.TestCase):
                                         )
         output_ge_fwd.load_region_anno_from_npy("CRP", 
                                                  os.path.join(args_fwd.output_header + ".crp.npy"), 
+                                                 anno_type="track",
                                                  )
-        crp_track_fwd_list = output_ge_fwd.get_anno_list("CRP")
+        crp_track_fwd_list = output_ge_fwd.get_track_list("CRP")
         
         # 'both' should give max of forward and reverse, so should be >= forward
         for t_both, t_fwd in zip(crp_track_list, crp_track_fwd_list):

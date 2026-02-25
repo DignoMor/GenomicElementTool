@@ -63,7 +63,7 @@ class GenomicElementImport:
 
         region_arr = lsfile.get_contents(dtype=args.dtype)
 
-        input_ge.load_region_anno_from_arr("region_list", region_arr)
+        input_ge.load_region_stat_from_arr("region_list", region_arr)
 
         if args.opath.endswith(".npz"): 
             input_ge.save_anno_npz("region_list", args.opath)

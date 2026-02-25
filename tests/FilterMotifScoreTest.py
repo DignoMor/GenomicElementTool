@@ -70,9 +70,10 @@ class FilterMotifScoreTest(unittest.TestCase):
         
         filtered_ge.load_region_anno_from_npy("motif", 
                                               args.output_header + ".motif.npy",
+                                              anno_type="track",
                                               )
         
-        self.assertEqual(len(filtered_ge.get_anno_list("motif")), 1)
+        self.assertEqual(len(filtered_ge.get_track_list("motif")), 1)
 
 if __name__ == "__main__":
     unittest.main()

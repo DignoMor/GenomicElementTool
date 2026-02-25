@@ -252,6 +252,7 @@ class GenomicElementExportTest(unittest.TestCase):
             anno_name=["stat", "track"],
             left_anno_path=[left_stat_path, left_track_path],
             right_anno_path=[right_stat_path, right_track_path],
+            anno_type=["stat", "track"],
             oheader=oheader,
             oformat="MergedGE",
         )
