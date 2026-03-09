@@ -18,6 +18,7 @@ The export subcommand supports the following output formats:
 - `CountTable`: Export statistical annotations as a count table (CSV)
 - `Heatmap`: Generate heatmap visualizations from track annotations
 - `ChromFilteredGE`: Filter regions by chromosome and export as BED file
+- `MaskedGE`: Filter regions by a mask annotation and export a filtered Genomic Element dataset
 - `TREbed`: Annotate regions with forward and reverse TSS from GROcap/PROcap signals
 - `MergedGE`: Merge multiple Genomic Element files into one
 
@@ -324,6 +325,92 @@ chr1    248956422
 chr2    242193529
 chr3    198295559
 ...
+```
+
+## MaskedGE
+
+Filter genomic regions using a boolean mask annotation and export the selected regions as a BED file. Optionally, export one or more annotations sliced by the same mask.
+
+### Usage
+
+```bash
+GenomicElementTool.py export MaskedGE [OPTIONS]
+```
+
+### Required Arguments
+
+- `--region_file_path` (str)
+  - Path to the region file (BED format)
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of the region file
+  - Required: Yes
+  - Valid types: `bed3`, `bed6`, `bed6gene`, etc.
+
+- `--mask_npy` (str)
+  - Path to a mask annotation NumPy file (`.npy` or `.npz`)
+  - Required: Yes
+  - Must contain one boolean value per input region
+  - `True` values are kept in the output
+
+- `--opath` (str)
+  - Output path for the filtered BED file
+  - Required: Yes
+
+### Optional Arguments
+
+- `--anno_name` (str)
+  - Annotation name to load and export after masking
+  - Can be specified multiple times
+  - Must align with `--anno_npy` and `--anno_type`
+
+- `--anno_npy` (str)
+  - Path to annotation file (`.npy` or single-array `.npz`)
+  - Can be specified multiple times
+  - Must align with `--anno_name` and `--anno_type`
+
+- `--anno_type` (str)
+  - Annotation type for each input annotation
+  - Can be specified multiple times
+  - Choices: `track`, `stat`, `mask`, `array`
+  - Must align with `--anno_name` and `--anno_npy`
+
+- `--anno_oheader` (str)
+  - Output prefix for masked annotation files
+  - Required when any annotation arguments are provided
+  - Output files are written as `<anno_oheader>.<anno_name>.npy`
+
+### Output
+
+- **Output Region file**: Contains only regions where the mask annotation is `True`
+  - Preserves the original BED format and all columns
+  - Keeps the original region order among retained regions
+- **Optional masked annotation files**:
+  - One `.npy` file per requested annotation
+  - Annotation arrays are sliced by the same mask used for regions
+
+### Example
+
+```bash
+GenomicElementTool.py export MaskedGE \
+    --region_file_path all_regions.bed6 \
+    --region_file_type bed6 \
+    --mask_npy high_confidence_mask.npy \
+    --opath high_confidence_regions.bed6
+```
+
+With annotation export:
+
+```bash
+GenomicElementTool.py export MaskedGE \
+    --region_file_path all_regions.bed6 \
+    --region_file_type bed6 \
+    --mask_npy high_confidence_mask.npy \
+    --opath high_confidence_regions.bed6 \
+    --anno_name sample_stat --anno_npy sample_stat.npy --anno_type stat \
+    --anno_name sample_track --anno_npy sample_track.npy --anno_type track \
+    --anno_oheader high_confidence_regions
 ```
 
 ## TREbed

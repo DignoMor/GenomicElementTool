@@ -24,6 +24,10 @@ class GenomicElementExportTest(unittest.TestCase):
         self.__sample2_npy_path = os.path.join(self.__wdir, "sample2.npy")
         np.save(self.__sample1_npy_path, np.array([1,2,3]))
         np.save(self.__sample2_npy_path, np.array([4,5,6]))
+        self.__mask_npy_path = os.path.join(self.__wdir, "mask.npy")
+        np.save(self.__mask_npy_path, np.array([True, False, True]))
+        self.__track_npy_path = os.path.join(self.__wdir, "track.npy")
+        np.save(self.__track_npy_path, np.array([[1] * 1001, [2] * 1001, [3] * 1001]))
 
         # Create test signal tracks for TREbed export
         # Regions from three_genes.bed3: 
@@ -133,6 +137,33 @@ class GenomicElementExportTest(unittest.TestCase):
         output_bt = BedTable3()
         output_bt.load_from_file(args.opath)
         self.assertEqual(len(output_bt), 1)
+
+    def test_export_masked_ge(self):
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            mask_npy=self.__mask_npy_path,
+            opath=os.path.join(self.__wdir, "test.masked.bed3"),
+            anno_name=["sample1", "track1"],
+            anno_npy=[self.__sample1_npy_path, self.__track_npy_path],
+            anno_type=["stat", "track"],
+            anno_oheader=os.path.join(self.__wdir, "masked_output"),
+            oformat="MaskedGE",
+        )
+        GenomicElementExport.export_masked_ge(args)
+
+        output_bt = BedTable3(enable_sort=False)
+        output_bt.load_from_file(args.opath)
+        output_regions = list(output_bt.iter_regions())
+
+        self.assertEqual(len(output_bt), 2)
+        self.assertEqual(output_regions[0]["chrom"], "chr14")
+        self.assertEqual(output_regions[1]["chrom"], "chr6")
+
+        masked_stat = np.load(args.anno_oheader + ".sample1.npy")
+        masked_track = np.load(args.anno_oheader + ".track1.npy")
+        np.testing.assert_array_equal(masked_stat.reshape(-1,), np.array([1, 3]))
+        np.testing.assert_array_equal(masked_track[:, 0], np.array([1, 3]))
 
     def test_export_trebed(self):
         args = argparse.Namespace(

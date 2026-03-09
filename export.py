@@ -32,6 +32,11 @@ class GenomicElementExport:
                                                          )
         GenomicElementExport.set_parser_chrom_filtered_ge(parser_chrom_filtered_ge)
 
+        parser_masked_ge = subparsers.add_parser("MaskedGE",
+                                                 help="Export masked GenomicElements and optional masked annotations.",
+                                                 )
+        GenomicElementExport.set_parser_masked_ge(parser_masked_ge)
+
         parser_trebed = subparsers.add_parser("TREbed",
                                              help="Export TREbed file with fwdTSS and revTSS annotations.",
                                              )
@@ -136,6 +141,40 @@ class GenomicElementExport:
         return parser
 
     @staticmethod
+    def set_parser_masked_ge(parser):
+        GenomicElements.set_parser_genomic_element_region(parser)
+        parser.add_argument("--mask_npy",
+                            help="Path to boolean mask annotation npy/npz file.",
+                            required=True,
+                            )
+        parser.add_argument("--opath",
+                            help="Output path of the filtered GenomicElements.",
+                            required=True,
+                            )
+        parser.add_argument("--anno_name",
+                            help="Annotation name to export after masking. Can be specified multiple times.",
+                            action="append",
+                            default=[],
+                            )
+        parser.add_argument("--anno_npy",
+                            help="Path to annotation npy/npz file. Can be specified multiple times.",
+                            action="append",
+                            default=[],
+                            )
+        parser.add_argument("--anno_type",
+                            help="Annotation type for each annotation. Can be specified multiple times.",
+                            action="append",
+                            default=[],
+                            choices=["track", "stat", "mask", "array"],
+                            )
+        parser.add_argument("--anno_oheader",
+                            help="Output header for masked annotation files.",
+                            type=str,
+                            default=None,
+                            )
+        return parser
+
+    @staticmethod
     def set_parser_trebed(parser):
         GenomicElements.set_parser_genomic_element_region(parser)
         parser.add_argument("--pl_sig_track", 
@@ -204,7 +243,7 @@ class GenomicElementExport:
 
     @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE", "TREbed", "MergedGE"]
+        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -421,6 +460,36 @@ class GenomicElementExport:
         output_bt.write(args.opath)
 
     @staticmethod
+    def export_masked_ge(args):
+        if len(args.anno_name) != len(args.anno_npy):
+            raise ValueError(
+                f"Number of anno_name ({len(args.anno_name)}) must match "
+                f"number of anno_npy ({len(args.anno_npy)})"
+            )
+        if len(args.anno_name) != len(args.anno_type):
+            raise ValueError(
+                f"Number of anno_name ({len(args.anno_name)}) must match "
+                f"number of anno_type ({len(args.anno_type)})"
+            )
+        if len(args.anno_name) > 0 and args.anno_oheader is None:
+            raise ValueError("anno_oheader is required when annotation export arguments are provided.")
+
+        ge = GenomicElements(args.region_file_path,
+                             args.region_file_type,
+                             None,
+                             )
+        ge.load_region_anno_from_npy("__mask__", args.mask_npy, anno_type="mask")
+        mask_arr = ge.get_mask_arr("__mask__").reshape(-1,)
+
+        for anno_name, anno_npy, anno_type in zip(args.anno_name, args.anno_npy, args.anno_type):
+            ge.load_region_anno_from_npy(anno_name, anno_npy, anno_type=anno_type)
+
+        result_ge = ge.apply_logical_filter(mask_arr, args.opath)
+
+        for anno_name in args.anno_name:
+            result_ge.save_anno_npy(anno_name, f"{args.anno_oheader}.{anno_name}.npy")
+
+    @staticmethod
     def export_trebed(args):
         '''
         Export TREbed file with forward and reverse TSS annotations.
@@ -529,6 +598,8 @@ class GenomicElementExport:
             GenomicElementExport.export_heatmap(args)
         elif args.oformat == "ChromFilteredGE":
             GenomicElementExport.export_chrom_filtered_ge(args)
+        elif args.oformat == "MaskedGE":
+            GenomicElementExport.export_masked_ge(args)
         elif args.oformat == "TREbed":
             GenomicElementExport.export_trebed(args)
         elif args.oformat == "MergedGE":
