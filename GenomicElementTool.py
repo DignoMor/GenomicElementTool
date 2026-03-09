@@ -11,6 +11,7 @@ from filter_motif_score import FilterMotifScore
 from track2tss_bed import Track2TssBed
 from export import GenomicElementExport
 from GenomicElementImport import GenomicElementImport
+from get_context_ge import GetContextGe
 
 class GenomicElementTool:
     @staticmethod
@@ -78,6 +79,12 @@ class GenomicElementTool:
 
         GenomicElementImport.set_parser(parser_import)
 
+        parser_get_context_ge = subparsers.add_parser("get_context_ge",
+                                                      help="Generate context windows around regions.",
+                                                      )
+
+        GetContextGe.set_parser(parser_get_context_ge)
+
     @staticmethod
     def main(args):
         if args.subcommand == "count_single_bw":
@@ -100,6 +107,8 @@ class GenomicElementTool:
             GenomicElementExport.main(args)
         elif args.subcommand == "import":
             GenomicElementImport.main(args)
+        elif args.subcommand == "get_context_ge":
+            GetContextGe.main(args)
         else:
             raise ValueError("Unknown subcommand: {}".format(args.subcommand))
 

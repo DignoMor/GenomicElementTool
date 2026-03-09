@@ -91,6 +91,18 @@ GenomicElementTool.py pad_region [OPTIONS]
 
 This program differs from standard padding tools in that it preserves the order of elements in Genomic Elements files. See [pad_region.md](pad_region.md) for detailed documentation.
 
+### get_context_ge
+
+Generate context windows around genomic regions.
+
+```bash
+GenomicElementTool.py get_context_ge [OPTIONS]
+```
+
+Creates context genomic element regions by pairing elements 
+to a set of candidate context set (e.g. promoters). 
+See [get_context_ge.md](get_context_ge.md) for detailed documentation.
+
 ### bed2tssbed
 
 Convert BED file to TSS (Transcriptional Start Site) BED file.
