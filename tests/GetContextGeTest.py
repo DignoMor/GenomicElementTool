@@ -4,6 +4,7 @@ import shutil
 import unittest
 
 import pandas as pd
+import numpy as np
 
 from RGTools.BedTable import BedTable3
 
@@ -88,3 +89,45 @@ class GetContextGeTest(unittest.TestCase):
             GetContextGe.main(args)
 
         self.assertIn("No context regions found on chromosome 'chr3'", str(context.exception))
+
+    def test_windowed_argmax_selects_max_stat_context_in_each_window(self):
+        args = self._get_base_args()
+        args.method = "windowed_argmax"
+        args.context_stat_path = os.path.join(self._test_path, "context_stat.npy")
+
+        # region_file_path here stores windows (e.g., padded input elements).
+        self._write_bed3(
+            args.region_file_path,
+            [
+                ("chr1", 0, 200),
+                ("chr1", 200, 400),
+                ("chr2", 0, 120),
+            ],
+        )
+        self._write_bed3(
+            args.context_file_path,
+            [
+                ("chr1", 10, 20),    # in window1, stat=1
+                ("chr1", 130, 140),  # in window1, stat=4 (selected)
+                ("chr1", 220, 230),  # in window2, stat=5 (selected, tie by order)
+                ("chr1", 260, 270),  # in window2, stat=5
+                ("chr2", 80, 90),    # in window3, stat=3 (selected)
+            ],
+        )
+        np.save(args.context_stat_path, np.array([1.0, 4.0, 5.0, 5.0, 3.0]))
+
+        GetContextGe.main(args)
+
+        output_bt = BedTable3()
+        output_bt.load_from_file(args.opath)
+        output_df = output_bt.to_dataframe()
+
+        self.assertEqual(len(output_df), 3)
+        self.assertEqual(
+            list(zip(output_df["chrom"], output_df["start"], output_df["end"])),
+            [
+                ("chr1", 130, 140),
+                ("chr1", 220, 230),
+                ("chr2", 80, 90),
+            ],
+        )
