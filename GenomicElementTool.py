@@ -12,6 +12,7 @@ from track2tss_bed import Track2TssBed
 from export import GenomicElementExport
 from GenomicElementImport import GenomicElementImport
 from get_context_ge import GetContextGe
+from mask_op import MaskOp
 
 class GenomicElementTool:
     @staticmethod
@@ -85,6 +86,13 @@ class GenomicElementTool:
 
         GetContextGe.set_parser(parser_get_context_ge)
 
+        parser_mask_op = subparsers.add_parser(
+            "mask_op",
+            help="Apply logical operations to mask arrays.",
+        )
+
+        MaskOp.set_parser(parser_mask_op)
+
     @staticmethod
     def main(args):
         if args.subcommand == "count_single_bw":
@@ -109,6 +117,8 @@ class GenomicElementTool:
             GenomicElementImport.main(args)
         elif args.subcommand == "get_context_ge":
             GetContextGe.main(args)
+        elif args.subcommand == "mask_op":
+            MaskOp.main(args)
         else:
             raise ValueError("Unknown subcommand: {}".format(args.subcommand))
 
