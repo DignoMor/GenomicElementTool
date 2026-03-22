@@ -73,6 +73,27 @@ class MaskOpTest(unittest.TestCase):
         np.testing.assert_array_equal(out, np.array([True, True, True]))
         self.assertEqual(out.dtype, bool)
 
+    def test_opposite(self):
+        args = argparse.Namespace(
+            operation="opposite",
+            region_file_path=self._region_file_path,
+            region_file_type=self._region_file_type,
+            mask_npy=self._mask1_path,
+            opath=self._out_path,
+        )
+        MaskOp.main(args)
+
+        ge = GenomicElements(
+            region_file_path=self._region_file_path,
+            region_file_type=self._region_file_type,
+            fasta_path=None,
+        )
+        ge.load_region_anno_from_npy("__mask__", self._out_path, anno_type="mask")
+        out = ge.get_mask_arr("__mask__").reshape(-1,)
+
+        np.testing.assert_array_equal(out, np.array([False, True, False]))
+        self.assertEqual(out.dtype, bool)
+
     def test_requires_at_least_two_masks(self):
         args = argparse.Namespace(
             operation="union",

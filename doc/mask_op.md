@@ -20,6 +20,7 @@ The `mask_op` subcommand supports the following operations:
 
 - `intersect`: element-wise AND (keeps entries that are `True` in all masks)
 - `union`: element-wise OR (keeps entries that are `True` in any mask)
+- `opposite`: element-wise NOT (inverts `True`/`False` values of one mask)
 
 ## `intersect`
 
@@ -111,18 +112,54 @@ GenomicElementTool.py mask_op union \
   --opath combined_activity.npy
 ```
 
+## `opposite`
+
+Compute the logical opposite of one input mask.
+
+### Usage
+
+```bash
+GenomicElementTool.py mask_op opposite [OPTIONS]
+```
+
+### Required Arguments
+
+- `--region_file_path` (str)
+  - Path to the input region file corresponding to the mask array.
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of the input region file.
+  - Required: Yes
+  - Valid types: `bed3`, `bed6`, `bed6gene`, `bed3gene`, `narrowPeak`, `TREbed`, `bedGraph`
+
+- `--mask_npy` (str)
+  - Path to an input mask array file (`.npy` or single-array `.npz`)
+  - Required: Yes
+  - Must be specified exactly once
+
+- `--opath` (str)
+  - Output path of the inverted mask (`.npy`)
+  - Required: Yes
+
+### Behavior
+
+- element-wise NOT
+
+### Example
+
+```bash
+GenomicElementTool.py mask_op opposite \
+  --region_file_path regions.bed3 \
+  --region_file_type bed3 \
+  --mask_npy blacklisted_regions.npy \
+  --opath keep_regions.npy
+```
+
 ## Output
 
 - **Mask array file** (`.npy`)
   - `mask` anno type for Genomic Elements
-
-## Validation Rules
-
-- At least two `--mask_npy` inputs are required
-- All input masks must have the same shape
-- Inputs should correspond to the same region order and same
-  Genomic Element set
-- A shape mismatch should raise an error
 
 ## Typical Workflows
 
