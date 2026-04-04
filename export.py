@@ -1,5 +1,6 @@
 
 from RGTools.GenomicElements import GenomicElements
+from RGTools.ExogeneousSequences import ExogeneousSequences
 from RGTools.utils import str2bool
 
 import numpy as np
@@ -16,6 +17,11 @@ class GenomicElementExport:
                                                           help="Export exogeneous sequences.",
                                                           )
         GenomicElementExport.set_parser_exogeneous_sequences(parser_exogeneous_sequences)
+
+        parser_wtes = subparsers.add_parser("WTES",
+                                            help="Export wild type exogeneous sequences.",
+                                            )
+        GenomicElementExport.set_parser_wtes(parser_wtes)
 
         parser_count_table = subparsers.add_parser("CountTable", 
                                                   help="Export count table.",
@@ -53,6 +59,21 @@ class GenomicElementExport:
         GenomicElements.set_parser_genomic_element_region(parser)
         parser.add_argument("--oheader", 
                             help="Header of the output file.",
+                            required=True,
+                            )
+        return parser
+
+    @staticmethod
+    def set_parser_wtes(parser):
+        GenomicElements.set_parser_genome(parser)
+        GenomicElements.set_parser_genomic_element_region(parser)
+        parser.add_argument("--num_replicates",
+                            help="Number of replicates for each region sequence.",
+                            required=True,
+                            type=int,
+                            )
+        parser.add_argument("--opath",
+                            help="Output path of the WTES fasta file.",
                             required=True,
                             )
         return parser
@@ -243,7 +264,7 @@ class GenomicElementExport:
 
     @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE"]
+        return ["ExogeneousSequences", "WTES", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -252,6 +273,27 @@ class GenomicElementExport:
                              args.fasta_path, 
                              )
         ge.export_exogeneous_sequences(args.oheader + ".fa")
+
+    @staticmethod
+    def export_wtes(args):
+        if args.num_replicates < 1:
+            raise ValueError(f"num_replicates must be >= 1, got {args.num_replicates}")
+
+        ge = GenomicElements(args.region_file_path,
+                             args.region_file_type,
+                             args.fasta_path,
+                             )
+        regions = list(ge.get_region_bed_table().iter_regions())
+        region_seqs = ge.get_all_region_seqs()
+
+        seq_ids = []
+        seqs = []
+        for region, seq in zip(regions, region_seqs):
+            for ind in range(args.num_replicates):
+                seq_ids.append(f"{region['chrom']}:{region['start']}-{region['end']}_{ind}")
+                seqs.append(seq)
+
+        ExogeneousSequences.write_sequences_to_fasta(seq_ids, seqs, args.opath)
 
     @staticmethod
     def region2region_id(region, region_id_type):
@@ -592,6 +634,8 @@ class GenomicElementExport:
     def main(args):
         if args.oformat == "ExogeneousSequences":
             GenomicElementExport.export_exogeneous_sequences(args)
+        elif args.oformat == "WTES":
+            GenomicElementExport.export_wtes(args)
         elif args.oformat == "CountTable":
             GenomicElementExport.export_count_table(args)
         elif args.oformat == "Heatmap":

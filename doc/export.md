@@ -14,7 +14,8 @@ GenomicElementTool.py export <oformat> [OPTIONS]
 ```
 
 The export subcommand supports the following output formats:
-- `ExogeneousSequences`: Export genomic sequences to FASTA format
+- `ExogeneousSequences`: Export genomic sequences to Exogeneous Sequences (FASTA format).
+- `WTES`: Export genomic sequences to Wild Type ES ready for oligo library construction pipeline (FASTA format).
 - `CountTable`: Export statistical annotations as a count table (CSV)
 - `Heatmap`: Generate heatmap visualizations from track annotations
 - `ChromFilteredGE`: Filter regions by chromosome and export as BED file
@@ -71,6 +72,59 @@ GenomicElementTool.py export ExogeneousSequences \
 ```
 
 This creates `my_sequences.fa` with sequences for each region in the BED file.
+
+## WTES
+
+Export genomic regions as sequences in FASTA format for Wild Type ES ready for oligo library construction pipeline.
+
+### Usage
+
+```bash
+GenomicElementTool.py export WTES [OPTIONS]
+```
+
+### Required Arguments
+
+- `--fasta_path` (str)
+  - Path to the genome FASTA file
+  - Required: Yes
+
+- `--region_file_path` (str)
+  - Path to the region file (BED format)
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of the region file
+  - Required: Yes
+  - Valid types: `bed3`, `bed6`, `bed6gene`, `TREbed`, etc.
+  - See `GenomicElements` documentation for full list
+
+- `--num_replicates` (int)
+  - Number of replicates for the Wild Type ES
+  - Required: Yes
+
+- `--opath` (str)
+  - Output path for the FASTA file
+  - Required: Yes
+
+### Output
+
+- **FASTA file**: `opath`
+  - Contains `num_replicates` sequences per genomic region
+  - Sequence headers use format: `>chrom:start-end_<replicate_number>` for each replicate
+  - Sequences are extracted from the reference genome based on region coordinates
+  - For WT elements, replicates simply means multiple copies of the same sequence.
+
+### Example
+
+```bash
+GenomicElementTool.py export WTES \
+    --fasta_path /path/to/genome.fa \
+    --region_file_path regions.bed6 \
+    --region_file_type bed6 \
+    --num_replicates 5 \
+    --opath my_wtes.fa
+```
 
 ## CountTable
 

@@ -86,6 +86,30 @@ class GenomicElementExportTest(unittest.TestCase):
             lines = handle.readlines()
             self.assertEqual(len(lines), 6)
             self.assertEqual(lines[1][:10], "CCCCATCCCC")
+
+    def test_export_wtes(self):
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            fasta_path=self.__fasta_path,
+            num_replicates=2,
+            opath=os.path.join(self.__wdir, "test.wtes.fa"),
+            oformat="WTES",
+        )
+        GenomicElementExport.export_wtes(args)
+
+        with open(args.opath, "r") as handle:
+            lines = [line.strip() for line in handle.readlines()]
+
+        self.assertEqual(len(lines), 12)
+        self.assertEqual(lines[0], ">chr14:75278325-75279326_0")
+        self.assertEqual(lines[2], ">chr14:75278325-75279326_1")
+        self.assertEqual(lines[4], ">chr17:45894026-45895027_0")
+        self.assertEqual(lines[10], ">chr6:170553801-170554802_1")
+        self.assertEqual(lines[1][:10], "CCCCATCCCC")
+        self.assertEqual(lines[1], lines[3])
+        self.assertEqual(lines[5], lines[7])
+        self.assertEqual(lines[9], lines[11])
     
     def test_export_count_table(self):
 
