@@ -49,14 +49,13 @@ GenomicElementTool.py export ExogeneousSequences [OPTIONS]
   - Valid types: `bed3`, `bed6`, `bed6gene`, `TREbed`, etc.
   - See `GenomicElements` documentation for full list
 
-- `--oheader` (str)
-  - Header prefix for the output FASTA file
+- `--opath` (str)
+  - Fasta output file path.
   - Required: Yes
-  - Output file will be saved as `<oheader>.fa`
 
 ### Output
 
-- **FASTA file**: `<oheader>.fa`
+- **FASTA file**: `<opath>`
   - Contains one sequence per genomic region
   - Sequence headers use format: `>chrom:start-end`
   - Sequences are extracted from the reference genome based on region coordinates
@@ -68,10 +67,10 @@ GenomicElementTool.py export ExogeneousSequences \
     --fasta_path /path/to/genome.fa \
     --region_file_path regions.bed6 \
     --region_file_type bed6 \
-    --oheader my_sequences
+    --opath my_sequences.fa
 ```
 
-This creates `my_sequences.fa` with sequences for each region in the BED file.
+This writes `my_sequences.fa` with sequences for each region in the BED file.
 
 ## WTES
 

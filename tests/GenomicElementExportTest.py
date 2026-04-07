@@ -72,16 +72,16 @@ class GenomicElementExportTest(unittest.TestCase):
         super().tearDown()
 
     def test_export_exogeneous_sequences(self):
+        ofile = os.path.join(self.__wdir, "test.fa")
         args = argparse.Namespace(
             region_file_path=self.__bed3_path,
             region_file_type="bed3",
             fasta_path=self.__fasta_path,
-            oheader=os.path.join(self.__wdir, "test"),
+            opath=ofile,
             oformat="ExogeneousSequences",
         )
         GenomicElementExport.export_exogeneous_sequences(args)
 
-        ofile = os.path.join(self.__wdir, "test.fa")
         with open(ofile, "r") as handle:
             lines = handle.readlines()
             self.assertEqual(len(lines), 6)

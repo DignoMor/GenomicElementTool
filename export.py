@@ -57,8 +57,8 @@ class GenomicElementExport:
     def set_parser_exogeneous_sequences(parser):
         GenomicElements.set_parser_genome(parser)
         GenomicElements.set_parser_genomic_element_region(parser)
-        parser.add_argument("--oheader", 
-                            help="Header of the output file.",
+        parser.add_argument("--opath", 
+                            help="Fasta output file path.",
                             required=True,
                             )
         return parser
@@ -272,7 +272,7 @@ class GenomicElementExport:
                              args.region_file_type, 
                              args.fasta_path, 
                              )
-        ge.export_exogeneous_sequences(args.oheader + ".fa")
+        ge.export_exogeneous_sequences(args.opath)
 
     @staticmethod
     def export_wtes(args):
