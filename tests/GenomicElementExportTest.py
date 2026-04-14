@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 from export import GenomicElementExport
-from RGTools.BedTable import BedTable3
+from RGTools.BedTable import BedTable3, BedTable6, BedTable6Plus
 from RGTools.GenomicElements import GenomicElements
 
 class GenomicElementExportTest(unittest.TestCase):
@@ -28,6 +28,17 @@ class GenomicElementExportTest(unittest.TestCase):
         np.save(self.__mask_npy_path, np.array([True, False, True]))
         self.__track_npy_path = os.path.join(self.__wdir, "track.npy")
         np.save(self.__track_npy_path, np.array([[1] * 1001, [2] * 1001, [3] * 1001]))
+        self.__bed6_path = os.path.join(self.__wdir, "test_snps.bed6")
+        bed6_bt = BedTable6(enable_sort=False)
+        bed6_bt.load_from_dataframe(pd.DataFrame({
+            "chrom": ["chr1", "chr1", "chr1", "chr1"],
+            "start": [161133654, 161136563, 161140556, 161141572],
+            "end": [161133655, 161136564, 161140557, 161141573],
+            "name": ["rs10797093", "rs11265557", "rs12041364", "rs11591206"],
+            "score": [2.677e-08, 2.242e-08, 2.206e-08, 2.326e-08],
+            "strand": ["+", "+", "+", "+"],
+        }))
+        bed6_bt.write(self.__bed6_path)
 
         # Create test signal tracks for TREbed export
         # Regions from three_genes.bed3: 
@@ -326,3 +337,32 @@ class GenomicElementExportTest(unittest.TestCase):
         track_arr = np.load(oheader + ".track.npy")
         np.testing.assert_array_equal(stat_arr.reshape(-1,), np.array([10, 20, 100, 200]))
         np.testing.assert_array_equal(track_arr[:, 0], np.array([3, 4, 1, 2]))
+
+    def test_export_bed6poly(self):
+        args = argparse.Namespace(
+            region_file_path=self.__bed6_path,
+            region_file_type="bed6",
+            genome_version="hg38",
+            opath=os.path.join(self.__wdir, "test.bed6poly"),
+            oformat="bed6poly",
+        )
+
+        GenomicElementExport.export_bed6poly(args)
+
+        output_bt = BedTable6Plus(extra_column_names=["polymorphism"],
+                                  extra_column_dtype=[str],
+                                  enable_sort=False,
+                                  )
+        output_bt.load_from_file(args.opath)
+        regions = list(output_bt.iter_regions())
+
+        self.assertEqual(len(regions), 4)
+        expected = {
+            "rs10797093": "T/G",
+            "rs11265557": "T/C/G",
+            "rs12041364": "G/A/C",
+            "rs11591206": "C/A/G/T",
+        }
+        for region in regions:
+            self.assertIn(region["name"], expected)
+            self.assertEqual(str(region["polymorphism"]), expected[region["name"]])

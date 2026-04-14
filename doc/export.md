@@ -22,6 +22,7 @@ The export subcommand supports the following output formats:
 - `MaskedGE`: Filter regions by a mask annotation and export a filtered Genomic Element dataset
 - `TREbed`: Annotate regions with forward and reverse TSS from GROcap/PROcap signals
 - `MergedGE`: Merge multiple Genomic Element files into one
+- `bed6poly`: Bed6 file with an extra column for polymorphism information (e.g., SNPs).
 
 ## ExogeneousSequences
 
@@ -584,6 +585,70 @@ GenomicElementTool.py export MergedGE \
     --right_anno_path file2.anno.npy \
     --region_file_type bed6 \
     --oheader merged
+```
+
+## bed6poly
+
+Export regions as `bed6poly`, a BED6-plus file with an additional polymorphism column 
+seperated by `/`.
+
+The program utilizes `RGTools.SNP_utils` for ensembl API to get the polymorphism information from rsids. If the rsid is not found, the program will raise an exception. 
+However, if the position does not match, the program will not stop but throw a warning.
+
+
+### Usage
+
+```bash
+GenomicElementTool.py export bed6poly [OPTIONS]
+```
+
+### Required Arguments
+
+- `--region_file_path` (str)
+  - Path to the input region file (BED format)
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of the region file
+  - Required: Yes
+  - Valid types: `bed6` only.
+
+- `--opath` (str)
+  - Output path for the `bed6poly` file
+  - Required: Yes
+
+### Optional Arguments
+
+- `--genome_version` (str)
+  - Genome assembly used for SNP lookup through Ensembl REST API
+  - Default: `hg38`
+  - Valid values: `hg38`, `GRCh38`, `hg19`, `GRCh37`
+
+### Output
+
+- **bed6poly file**: Contains one row per input region with:
+  - BED6 core columns: `chrom`, `start`, `end`, `name`, `score`, `strand`
+  - Additional polymorphism column with region-level polymorphism summary, 
+    seperated by `/`.
+  - Alleles follow Ensembl `allele_string` order: reference allele first, then alternate allele(s). The order of alternative alleles is not a priority ranking.
+  - Original region ordering preserved
+
+Example output:
+```
+chr1	161133654	161133655	rs10797093	2.677e-08	+	T/G
+chr1	161136563	161136564	rs11265557	2.242e-08	+	T/C/G
+chr1	161140556	161140557	rs12041364	2.206e-08	+	G/A/C
+chr1	161141572	161141573	rs11591206	2.326e-08	+	C/A/G/T
+```
+
+### Example
+
+```bash
+GenomicElementTool.py export bed6poly \
+    --region_file_path regions.bed6 \
+    --region_file_type bed6 \
+    --genome_version hg38 \
+    --opath regions.bed6poly
 ```
 
 ## Common Patterns

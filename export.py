@@ -1,6 +1,10 @@
 
+import warnings
+
 from RGTools.GenomicElements import GenomicElements
 from RGTools.ExogeneousSequences import ExogeneousSequences
+from RGTools.BedTable import BedTable6Plus
+from RGTools.SNP_utils import EnsemblRestSearch
 from RGTools.utils import str2bool
 
 import numpy as np
@@ -52,6 +56,11 @@ class GenomicElementExport:
                                                 help="Merge two Genomic Element datasets.",
                                                 )
         GenomicElementExport.set_parser_merged_ge(parser_merged_ge)
+
+        parser_bed6poly = subparsers.add_parser("bed6poly",
+                                                help="Export bed6 with polymorphism column from rsid names.",
+                                                )
+        GenomicElementExport.set_parser_bed6poly(parser_bed6poly)
 
     @staticmethod
     def set_parser_exogeneous_sequences(parser):
@@ -263,8 +272,34 @@ class GenomicElementExport:
         return parser
 
     @staticmethod
+    def set_parser_bed6poly(parser):
+        parser.add_argument("--region_file_path",
+                            help="Path to the input region file.",
+                            required=True,
+                            type=str,
+                            )
+        parser.add_argument("--region_file_type",
+                            help="Type of the region file.",
+                            required=True,
+                            default="bed6",
+                            type=str,
+                            choices=["bed6"],
+                            )
+        parser.add_argument("--genome_version",
+                            help="Genome version for Ensembl REST API lookup.",
+                            type=str,
+                            default="hg38",
+                            choices=["hg38", "GRCh38", "hg19", "GRCh37"],
+                            )
+        parser.add_argument("--opath",
+                            help="Output path for the bed6poly file.",
+                            required=True,
+                            )
+        return parser
+
+    @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "WTES", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE"]
+        return ["ExogeneousSequences", "WTES", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE", "bed6poly"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -631,6 +666,49 @@ class GenomicElementExport:
             merged_ge.save_anno_npy(anno_name, args.oheader + "." + anno_name + ".npy")
 
     @staticmethod
+    def export_bed6poly(args):
+        ge = GenomicElements(args.region_file_path,
+                             args.region_file_type,
+                             None,
+                             )
+        search_engine = EnsemblRestSearch(genome_version=args.genome_version, species="human")
+
+        output_dict_list = []
+        for region in ge.get_region_bed_table().iter_regions():
+            rsid = str(region["name"])
+
+            try: 
+                snp_info = search_engine.get_rsid_snp_simple_info(rsid)
+            except Exception as e:
+                raise Exception(f"Error getting SNP info for rsid: {rsid}")
+
+            polymorphism = snp_info["bases"]
+
+            if snp_info["chrom"] != region["chrom"] or snp_info["start"] != region["start"] or snp_info["end"] != region["end"]:
+                warnings.warn(f"Position mismatch for rsid: {rsid}.\n"
+                    f"SNP info: {snp_info['chrom']}:{snp_info['start']}-{snp_info['end']}.\n"
+                    f"Region: {region['chrom']}:{region['start']}-{region['end']}.\n"
+                )
+
+            output_dict = {
+                "chrom": region["chrom"],
+                "start": region["start"],
+                "end": region["end"],
+                "name": region["name"],
+                "score": region["score"],
+                "strand": region["strand"],
+                "polymorphism": polymorphism,
+            }
+            output_dict_list.append(output_dict)
+
+        output_bt = BedTable6Plus(extra_column_names=["polymorphism"],
+                                  extra_column_dtype=[str],
+                                  enable_sort=False,
+                                  )
+        output_bt.load_from_dataframe(pd.DataFrame(output_dict_list))
+        output_bt.write(args.opath)
+
+    @staticmethod
     def main(args):
         if args.oformat == "ExogeneousSequences":
             GenomicElementExport.export_exogeneous_sequences(args)
@@ -648,5 +726,7 @@ class GenomicElementExport:
             GenomicElementExport.export_trebed(args)
         elif args.oformat == "MergedGE":
             GenomicElementExport.export_merged_ge(args)
+        elif args.oformat == "bed6poly":
+            GenomicElementExport.export_bed6poly(args)
         else:
             raise ValueError(f"Invalid output format: {args.oformat}")
