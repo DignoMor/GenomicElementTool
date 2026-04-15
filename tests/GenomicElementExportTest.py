@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import numpy as np
 
+import export as export_module
 from export import GenomicElementExport
 from RGTools.BedTable import BedTable3, BedTable6, BedTable6Plus
 from RGTools.GenomicElements import GenomicElements

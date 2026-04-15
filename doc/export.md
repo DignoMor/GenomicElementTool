@@ -592,7 +592,8 @@ GenomicElementTool.py export MergedGE \
 Export regions as `bed6poly`, a BED6-plus file with an additional polymorphism column 
 seperated by `/`.
 
-The program utilizes `RGTools.SNP_utils` for ensembl API to get the polymorphism information from rsids. If the rsid is not found, the program will raise an exception. 
+The program utilizes `RGTools.SNP_utils` for ensembl API to get the polymorphism information from rsids. If the rsid is not found, the program will raise an exception
+or drop the region. 
 However, if the position does not match, the program will not stop but throw a warning.
 
 
@@ -623,6 +624,11 @@ GenomicElementTool.py export bed6poly [OPTIONS]
   - Genome assembly used for SNP lookup through Ensembl REST API
   - Default: `hg38`
   - Valid values: `hg38`, `GRCh38`, `hg19`, `GRCh37`
+
+- `--rsid_not_found_handling` (str)
+  - Handling of rsids not found in Ensembl REST API
+  - Default: `raise`
+  - Valid values: `raise`, `drop`
 
 ### Output
 

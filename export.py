@@ -291,6 +291,12 @@ class GenomicElementExport:
                             default="hg38",
                             choices=["hg38", "GRCh38", "hg19", "GRCh37"],
                             )
+        parser.add_argument("--rsid_not_found_handling",
+                            help="Handling strategy when an rsid is not found in Ensembl REST API.",
+                            type=str,
+                            default="raise",
+                            choices=["raise", "drop"],
+                            )
         parser.add_argument("--opath",
                             help="Output path for the bed6poly file.",
                             required=True,
@@ -680,7 +686,10 @@ class GenomicElementExport:
             try: 
                 snp_info = search_engine.get_rsid_snp_simple_info(rsid)
             except Exception as e:
-                raise Exception(f"Error getting SNP info for rsid: {rsid}")
+                if args.rsid_not_found_handling == "drop":
+                    warnings.warn(f"Dropping region for rsid not found: {rsid}")
+                    continue
+                raise Exception(f"Error getting SNP info for rsid: {rsid}") from e
 
             polymorphism = snp_info["bases"]
 
