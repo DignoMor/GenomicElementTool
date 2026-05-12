@@ -27,6 +27,12 @@ class GenomicElementExport:
                                             )
         GenomicElementExport.set_parser_wtes(parser_wtes)
 
+        parser_allele_expanded_es = subparsers.add_parser(
+            "allele_expanded_ES",
+            help="Export TRE-centered reference and allele-expanded exogeneous sequences.",
+        )
+        GenomicElementExport.set_parser_allele_expanded_es(parser_allele_expanded_es)
+
         parser_count_table = subparsers.add_parser("CountTable", 
                                                   help="Export count table.",
                                                   )
@@ -83,6 +89,27 @@ class GenomicElementExport:
                             )
         parser.add_argument("--opath",
                             help="Output path of the WTES fasta file.",
+                            required=True,
+                            )
+        return parser
+
+    @staticmethod
+    def set_parser_allele_expanded_es(parser):
+        GenomicElements.set_parser_genome(parser)
+        GenomicElements.set_parser_genomic_element_region(parser)
+        parser.add_argument("--inpath_polymorphisms",
+                            help="Input bed6+ polymorphism file with a bases column (e.g., REF/ALT1/ALT2).",
+                            required=True,
+                            type=str,
+                            )
+        parser.add_argument("--job_name",
+                            help="Optional job name for record keeping.",
+                            required=False,
+                            type=str,
+                            default=None,
+                            )
+        parser.add_argument("--opath",
+                            help="Output path of the allele-expanded fasta file.",
                             required=True,
                             )
         return parser
@@ -305,7 +332,7 @@ class GenomicElementExport:
 
     @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "WTES", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE", "bed6poly"]
+        return ["ExogeneousSequences", "WTES", "allele_expanded_ES", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE", "bed6poly"]
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -335,6 +362,60 @@ class GenomicElementExport:
                 seqs.append(seq)
 
         ExogeneousSequences.write_sequences_to_fasta(seq_ids, seqs, args.opath)
+
+    @staticmethod
+    def export_allele_expanded_es(args):
+        ge = GenomicElements(args.region_file_path,
+                             args.region_file_type,
+                             args.fasta_path,
+                             )
+
+        polymorphisms_bt = BedTable6Plus(extra_column_names=["bases"],
+                                         extra_column_dtype=[str],
+                                         enable_sort=False,
+                                         )
+        polymorphisms_bt.load_from_file(args.inpath_polymorphisms)
+
+        output_seq_ids = []
+        output_sequences = []
+        for region in ge.get_region_bed_table().iter_regions():
+            overlapping_snp_bt = polymorphisms_bt.region_subset(region["chrom"],
+                                                                region["start"],
+                                                                region["end"],
+                                                                )
+            if len(overlapping_snp_bt) == 0:
+                continue
+
+            ref_sequence = ge.get_region_seq(region["chrom"], region["start"], region["end"])
+            if ref_sequence is None:
+                raise ValueError(
+                    f"Chromosome {region['chrom']} not found in genome file. "
+                    f"Cannot export region {region['chrom']}:{region['start']}-{region['end']}"
+                )
+
+            output_seq_ids.append(f"{region['chrom']}_{region['start']}_{region['end']}_ref")
+            output_sequences.append(ref_sequence)
+
+            for snp in overlapping_snp_bt.iter_regions():
+                index2mut = snp["start"] - region["start"]
+                if index2mut < 0 or index2mut >= len(ref_sequence):
+                    continue
+                ref_base = ref_sequence[index2mut].upper()
+
+                for base in str(snp["bases"]).split("/"):
+                    mutated_base = base.upper().strip()
+                    if len(mutated_base) != 1:
+                        continue
+                    if mutated_base == ref_base:
+                        continue
+
+                    mutated_seq = ref_sequence[:index2mut] + mutated_base + ref_sequence[index2mut+1:]
+                    output_seq_ids.append(
+                        f"{region['chrom']}_{region['start']}_{region['end']}_{snp['start']}:{ref_base}2{mutated_base}"
+                    )
+                    output_sequences.append(mutated_seq)
+
+        ExogeneousSequences.write_sequences_to_fasta(output_seq_ids, output_sequences, args.opath)
 
     @staticmethod
     def region2region_id(region, region_id_type):
@@ -723,6 +804,8 @@ class GenomicElementExport:
             GenomicElementExport.export_exogeneous_sequences(args)
         elif args.oformat == "WTES":
             GenomicElementExport.export_wtes(args)
+        elif args.oformat == "allele_expanded_ES":
+            GenomicElementExport.export_allele_expanded_es(args)
         elif args.oformat == "CountTable":
             GenomicElementExport.export_count_table(args)
         elif args.oformat == "Heatmap":

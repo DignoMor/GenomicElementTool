@@ -10,6 +10,7 @@ import numpy as np
 import export as export_module
 from export import GenomicElementExport
 from RGTools.BedTable import BedTable3, BedTable6, BedTable6Plus
+from RGTools.ExogeneousSequences import ExogeneousSequences
 from RGTools.GenomicElements import GenomicElements
 
 class GenomicElementExportTest(unittest.TestCase):
@@ -82,6 +83,10 @@ class GenomicElementExportTest(unittest.TestCase):
             shutil.rmtree(self.__wdir)
 
         super().tearDown()
+
+    def __read_fasta_records(self, fasta_path):
+        es = ExogeneousSequences(fasta_path)
+        return list(zip(es.get_sequence_ids(), es.get_all_region_seqs()))
 
     def test_export_exogeneous_sequences(self):
         ofile = os.path.join(self.__wdir, "test.fa")
@@ -367,3 +372,108 @@ class GenomicElementExportTest(unittest.TestCase):
         for region in regions:
             self.assertIn(region["name"], expected)
             self.assertEqual(str(region["polymorphism"]), expected[region["name"]])
+
+    def test_export_allele_expanded_es(self):
+        tre_path = os.path.join(self.__wdir, "single_tre.bed3")
+        snp_path = os.path.join(self.__wdir, "single_tre.snp.bed6plus")
+        ofa = os.path.join(self.__wdir, "single_tre.allele_expanded.fa")
+
+        tre_bt = BedTable3(enable_sort=False)
+        tre_bt.load_from_dataframe(pd.DataFrame({
+            "chrom": ["chr14"],
+            "start": [75278325],
+            "end": [75279326],
+        }))
+        tre_bt.write(tre_path)
+
+        ge = GenomicElements(tre_path, "bed3", self.__fasta_path)
+        ref_seq = ge.get_all_region_seqs()[0]
+        mut_index = 10
+        ref_base = ref_seq[mut_index].upper()
+        alt_base = "A" if ref_base != "A" else "C"
+
+        snp_bt = BedTable6Plus(extra_column_names=["bases"],
+                               extra_column_dtype=[str],
+                               enable_sort=False,
+                               )
+        snp_bt.load_from_dataframe(pd.DataFrame({
+            "chrom": ["chr14"],
+            "start": [75278325 + mut_index],
+            "end": [75278325 + mut_index + 1],
+            "name": ["rsDraft1"],
+            "score": [0.0],
+            "strand": ["+"],
+            "bases": [f"{ref_base}/{alt_base}"],
+        }))
+        snp_bt.write(snp_path)
+
+        args = argparse.Namespace(
+            region_file_path=tre_path,
+            region_file_type="bed3",
+            fasta_path=self.__fasta_path,
+            inpath_polymorphisms=snp_path,
+            opath=ofa,
+            oformat="allele_expanded_ES",
+        )
+
+        GenomicElementExport.export_allele_expanded_es(args)
+        records = self.__read_fasta_records(ofa)
+
+        self.assertEqual(len(records), 2)
+        ref_id, ref_out_seq = records[0]
+        mut_id, mut_out_seq = records[1]
+        self.assertTrue(ref_id.endswith("_ref"))
+        self.assertIn(f"{75278325 + mut_index}:{ref_base}2{alt_base}", mut_id)
+        self.assertEqual(ref_out_seq[mut_index].upper(), ref_base)
+        self.assertEqual(mut_out_seq[mut_index].upper(), alt_base)
+
+    def test_export_allele_expanded_es_skips_ref_and_multibase_alt(self):
+        tre_path = os.path.join(self.__wdir, "single_tre2.bed3")
+        snp_path = os.path.join(self.__wdir, "single_tre2.snp.bed6plus")
+        ofa = os.path.join(self.__wdir, "single_tre2.allele_expanded.fa")
+
+        tre_bt = BedTable3(enable_sort=False)
+        tre_bt.load_from_dataframe(pd.DataFrame({
+            "chrom": ["chr14"],
+            "start": [75278325],
+            "end": [75279326],
+        }))
+        tre_bt.write(tre_path)
+
+        ge = GenomicElements(tre_path, "bed3", self.__fasta_path)
+        ref_seq = ge.get_all_region_seqs()[0]
+        mut_index = 20
+        ref_base = ref_seq[mut_index].upper()
+        alt_base = "G" if ref_base != "G" else "T"
+
+        snp_bt = BedTable6Plus(extra_column_names=["bases"],
+                               extra_column_dtype=[str],
+                               enable_sort=False,
+                               )
+        snp_bt.load_from_dataframe(pd.DataFrame({
+            "chrom": ["chr14"],
+            "start": [75278325 + mut_index],
+            "end": [75278325 + mut_index + 1],
+            "name": ["rsDraft2"],
+            "score": [0.0],
+            "strand": ["+"],
+            "bases": [f"{ref_base}/{alt_base}/TT"],
+        }))
+        snp_bt.write(snp_path)
+
+        args = argparse.Namespace(
+            region_file_path=tre_path,
+            region_file_type="bed3",
+            fasta_path=self.__fasta_path,
+            inpath_polymorphisms=snp_path,
+            opath=ofa,
+            oformat="allele_expanded_ES",
+        )
+
+        GenomicElementExport.export_allele_expanded_es(args)
+        records = self.__read_fasta_records(ofa)
+
+        self.assertEqual(len(records), 2)
+        self.assertTrue(records[0][0].endswith("_ref"))
+        self.assertIn(f"{75278325 + mut_index}:{ref_base}2{alt_base}", records[1][0])
+        self.assertEqual(records[1][1][mut_index].upper(), alt_base)

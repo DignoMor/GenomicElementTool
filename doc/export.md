@@ -16,6 +16,7 @@ GenomicElementTool.py export <oformat> [OPTIONS]
 The export subcommand supports the following output formats:
 - `ExogeneousSequences`: Export genomic sequences to Exogeneous Sequences (FASTA format).
 - `WTES`: Export genomic sequences to Wild Type ES ready for oligo library construction pipeline (FASTA format).
+- `allele_expanded_ES`: Export TRE-centered reference and SNP-mutated sequences in ExogeneousSequences format.
 - `CountTable`: Export statistical annotations as a count table (CSV)
 - `Heatmap`: Generate heatmap visualizations from track annotations
 - `ChromFilteredGE`: Filter regions by chromosome and export as BED file
@@ -125,6 +126,84 @@ GenomicElementTool.py export WTES \
     --num_replicates 5 \
     --opath my_wtes.fa
 ```
+
+## allele_expanded_ES
+
+Export TRE-centered exogeneous sequences with allele expansion from overlapping SNPs.  
+For each TRE that overlaps at least one polymorphism, the output contains:
+- one reference sequence, and
+- one mutated sequence per eligible alternate allele (single-nucleotide substitutions only).
+
+### Usage
+
+```bash
+GenomicElementTool.py export allele_expanded_ES [OPTIONS]
+```
+
+### Required Arguments
+
+- `--fasta_path` (str)
+  - Path to the reference genome FASTA file
+  - Required: Yes
+
+- `--region_file_path` (str)
+  - Path to the TRE region file
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of TRE region file
+  - Required: Yes
+
+- `--inpath_polymorphisms` (str)
+  - Path to polymorphism input in `bed6poly` style with a bases column
+  - Required: Yes
+  - Expected polymorphism column format: `REF/ALT1/ALT2` (e.g., `A/G`, `T/C/G`)
+
+- `--opath` (str)
+  - Output FASTA path
+  - Required: Yes
+
+### Optional Arguments
+
+- `--job_name` (str)
+  - Name of the mutagenesis job/run
+  - Optional metadata field for parity with the source script
+
+### Output
+
+- **FASTA file**: `<opath>`
+  - Contains sequences for TREs that overlap at least one polymorphism
+  - Includes one reference sequence per qualifying TRE
+  - Includes one sequence per valid single-base alternate allele
+  - Skips alleles that:
+    - match the reference base at that position, or
+    - are not single-nucleotide alleles (e.g., indels/multi-base alleles)
+
+Reference FASTA ID pattern:
+```
+chrom_start_end_ref
+```
+
+Mutated FASTA ID pattern:
+```
+chrom_start_end_<snp_position>:<ref_base>2<alt_base>
+```
+
+### Example
+
+```bash
+GenomicElementTool.py export allele_expanded_ES \
+    --fasta_path /path/to/genome.fa \
+    --region_file_path candidate_tres.bed3 \
+    --region_file_type bed3 \
+    --inpath_polymorphisms candidate_snps.bed6poly \
+    --opath candidate_tres.allele_expanded.fa
+```
+
+Typical pipeline:
+1. Build a polymorphism-aware `bed6poly` file (for rsid-based inputs).
+2. Run `export allele_expanded_ES` to generate reference + alternate TRE sequences.
+3. Use the resulting FASTA for downstream motif/perturbation scoring.
 
 ## CountTable
 
