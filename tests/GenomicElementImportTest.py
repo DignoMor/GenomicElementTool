@@ -40,10 +40,35 @@ class GenomicElementImportTest(unittest.TestCase):
             region_file_type="bed3",
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.npy"),
-            informat="list",
+            informat="stat_list",
             dtype="str"
         )
-        GenomicElementImport.import_list(args)
+        GenomicElementImport.import_stat_list(args)
+
+    def test_import_stat_list_main_npy(self):
+        # Create a test list file with 3 lines (matching three_genes.bed3)
+        list_file = os.path.join(self.__wdir, "test_stat_list.txt")
+        with open(list_file, 'w') as f:
+            f.write("10\n")
+            f.write("20\n")
+            f.write("30\n")
+
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            inpath=list_file,
+            opath=os.path.join(self.__wdir, "test_stat_list.npy"),
+            informat="stat_list",
+            dtype="np.int32"
+        )
+        GenomicElementImport.main(args)
+
+        loaded_arr = np.load(args.opath)
+        self.assertEqual(loaded_arr.dtype, np.int32)
+        self.assertEqual(len(loaded_arr), 3)
+        self.assertEqual(loaded_arr[0], 10)
+        self.assertEqual(loaded_arr[1], 20)
+        self.assertEqual(loaded_arr[2], 30)
 
     def test_import_int_list(self):
         # Create a test list file with 3 lines (matching three_genes.bed3)
@@ -58,10 +83,10 @@ class GenomicElementImportTest(unittest.TestCase):
             region_file_type="bed3",
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.npy"),
-            informat="list",
+            informat="stat_list",
             dtype="np.int32"
         )
-        GenomicElementImport.import_list(args)
+        GenomicElementImport.import_stat_list(args)
 
         # Load and verify the saved annotation
         loaded_arr = np.load(args.opath)
@@ -84,10 +109,10 @@ class GenomicElementImportTest(unittest.TestCase):
             region_file_type="bed3",
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.npz"),
-            informat="list",
+            informat="stat_list",
             dtype="str"
         )
-        GenomicElementImport.import_list(args)
+        GenomicElementImport.import_stat_list(args)
 
         # Verify the output file exists
         self.assertTrue(os.path.exists(args.opath))
@@ -114,12 +139,12 @@ class GenomicElementImportTest(unittest.TestCase):
             region_file_type="bed3",
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.npy"),
-            informat="list",
+            informat="stat_list",
             dtype="str"
         )
         
         with self.assertRaises(ValueError) as context:
-            GenomicElementImport.import_list(args)
+            GenomicElementImport.import_stat_list(args)
         
         self.assertIn("does not match", str(context.exception))
 
@@ -137,11 +162,11 @@ class GenomicElementImportTest(unittest.TestCase):
             inpath=list_file,
             opath=os.path.join(self.__wdir, "test_region_list.txt"),  # Invalid extension
             dtype="str",
-            informat="list",
+            informat="stat_list",
         )
         
         with self.assertRaises(ValueError) as context:
-            GenomicElementImport.import_list(args)
+            GenomicElementImport.import_stat_list(args)
         
         self.assertIn("Invalid output file type", str(context.exception))
 

@@ -15,11 +15,11 @@ class GenomicElementImport:
                                            required=True,
                                            )
 
-        parser_list = subparsers.add_parser("list", 
-                                            help="Import from a list file and output a GenomicElements npy/npz file.",
-                                            )
-
-        GenomicElementImport.set_parser_list(parser_list)
+        parser_stat_list = subparsers.add_parser(
+            "stat_list",
+            help="Import a list file as stat annotation values and output a GenomicElements npy/npz file.",
+        )
+        GenomicElementImport.set_parser_stat_list(parser_stat_list)
 
         parser_allele_expanded_es = subparsers.add_parser(
             "allele_expanded_ES",
@@ -28,11 +28,11 @@ class GenomicElementImport:
         GenomicElementImport.set_parser_allele_expanded_es(parser_allele_expanded_es)
 
     @staticmethod
-    def set_parser_list(parser):
+    def set_parser_stat_list(parser):
         GenomicElements.set_parser_genomic_element_region(parser)
 
         parser.add_argument("--inpath", "-I", 
-                            help="Input path of the list file.",
+                            help="Input path of the list file containing one stat value per region.",
                             required=True,
                             )
         
@@ -87,7 +87,7 @@ class GenomicElementImport:
 
     @staticmethod
     def get_informat_options():
-        return ["list", "allele_expanded_ES"]
+        return ["stat_list", "allele_expanded_ES"]
 
     @staticmethod
     def _parse_allele_expanded_seq_id(seq_id):
@@ -207,9 +207,9 @@ class GenomicElementImport:
             output_ge.save_anno_npy(f"{stat_name}.alt", f"{args.anno_oheader}.{stat_name}.alt.npy")
 
     @staticmethod
-    def import_list(args):
+    def import_stat_list(args):
         '''
-        Import regions from a list file.
+        Import stat annotation values from a list file.
         '''
         input_ge = GenomicElements(region_file_path=args.region_file_path,
                                    region_file_type=args.region_file_type,
@@ -234,8 +234,8 @@ class GenomicElementImport:
 
     @staticmethod
     def main(args):
-        if args.informat == "list":
-            GenomicElementImport.import_list(args)
+        if args.informat == "stat_list":
+            GenomicElementImport.import_stat_list(args)
         elif args.informat == "allele_expanded_ES":
             GenomicElementImport.import_allele_expanded_es(args)
         else:
