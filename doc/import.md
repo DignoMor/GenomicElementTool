@@ -18,6 +18,10 @@ GenomicElementTool.py import <informat> [OPTIONS]
 - `stat_list`: Import a line-based text file as one `stat` value per region.
 - `allele_expanded_ES`: Import allele-expanded exogeneous sequences and mutation metadata.
 
+Annotation model reference:
+- Genomic Element annotations support `track`, `stat`, `mask`, and `array`.
+- This `import` subcommand currently imports `stat` annotations only.
+
 ## `stat_list`
 
 Import one value per line from a plain text list file and save it as `region_list` stat annotation.
@@ -58,7 +62,7 @@ GenomicElementTool.py import stat_list [OPTIONS]
 
 - The number of lines in `--inpath` must match the number of regions in `--region_file_path`.
 - This format is restricted to importing annotation values of type `stat`.
-- Output annotation name is `region_list` (stored as a region stat track).
+- Output annotation name is `region_list` (stored as a `stat` annotation with one value per region).
 - The command raises an error if:
   - line count does not match region count, or
   - `--opath` is not `.npy` or `.npz`.

@@ -52,10 +52,16 @@ Supported region file types include:
 
 ### Annotations
 
-Annotations are NumPy arrays stored in `.npy` files. The first dimension of the array always equals the number of regions. Depending on the second dimension size, an annotation can be of different types:
+Annotations are NumPy arrays associated with regions. The first dimension always equals the number of regions (`N`). Genomic Element annotations support four types:
 
-- **track**: Store signal tracks for each element. The second dimension is larger than 1. These are used to store continuous signals across regions (e.g., ChIP-seq signals, motif scores, etc.).
-- **stat**: Store statistics for each element. The second dimension is of size 1. These are used to store single values per region (e.g., expression levels, peak scores, etc.).
+- **track**: signal values along each region. Stored as `(N, max_region_len)` with zero-padding for shorter regions in non-length-homogeneous datasets.
+- **stat**: one scalar value per region. Stored as `(N, 1)`.
+- **mask**: one boolean value per region. Stored as `(N, 1)`.
+- **array**: fixed-shape array payload per region. Stored as `(N, ...)` where trailing dimensions are shared by all regions.
+
+Notes:
+- In practice, CLI inputs are often provided as `(N,)` for stat/mask and then normalized internally to the canonical shape.
+- For variable-length regions, use track-aware APIs (for example, list-like per-region access) when you need unpadded per-region lengths.
 
 ## Subcommands for All GenomicElements data
 
@@ -227,7 +233,7 @@ GenomicElementTool relies on the RGTools library and requires:
 
 - All genomic coordinates follow the BED convention: 0-based, end-exclusive (half-open intervals)
 - Region files must be sorted or compatible with the expected format
-- Annotation arrays are stored in NumPy's `.npy` format for efficient I/O
+- Annotation arrays can be stored in `.npy` or single-array `.npz`; internal annotation typing follows `track`/`stat`/`mask`/`array`
 - The tool preserves element order when processing, which is important for maintaining correspondence between regions and annotations
 
 

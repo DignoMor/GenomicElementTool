@@ -67,7 +67,8 @@ GenomicElementTool.py export stat_list [OPTIONS]
 ### Behavior
 
 - The number of values in `--stat_npy` must match the number of regions in `--region_file_path`.
-- This format exports only `stat`-type annotations (1D arrays with shape `(num_regions,)`).
+- This format exports only `stat`-type annotations.
+- Accepted stat array shapes are typically `(num_regions,)` or `(num_regions, 1)`.
 - Output preserves region order from the region file.
 - The generated list is directly compatible with:
   - `GenomicElementTool.py import stat_list`
@@ -298,7 +299,7 @@ GenomicElementTool.py export CountTable [OPTIONS]
   - Required: Yes
   - Can be specified multiple times (use `--stat_npy` once per sample)
   - Must match the number of `--sample_name` arguments
-  - Each file should contain a 1D array with shape `(num_regions,)`
+  - Each file should contain one value per region (commonly `(num_regions,)` or `(num_regions, 1)`)
 
 ### Optional Arguments
 
@@ -371,7 +372,8 @@ GenomicElementTool.py export Heatmap [OPTIONS]
   - Required: Yes
   - Can be specified multiple times (use `--track_npy` once per track)
   - Must match the number of `--title` and `--negative` arguments
-  - Each file should contain a 2D array with shape `(num_regions, region_length)`
+  - Each file should contain a 2D array with shape `(num_regions, track_width)`
+  - For variable-length regions, track values are represented with right-padding up to `max_region_len`
 
 - `--title` (str)
   - Title for the heatmap track
@@ -541,7 +543,7 @@ GenomicElementTool.py export MaskedGE [OPTIONS]
 - `--mask_npy` (str)
   - Path to a mask annotation NumPy file (`.npy` or `.npz`)
   - Required: Yes
-  - Must contain one boolean value per input region
+  - Must contain one boolean value per input region (commonly `(num_regions,)` or `(num_regions, 1)`)
   - `True` values are kept in the output
 
 - `--opath` (str)
@@ -579,6 +581,7 @@ GenomicElementTool.py export MaskedGE [OPTIONS]
 - **Optional masked annotation files**:
   - One `.npy` file per requested annotation
   - Annotation arrays are sliced by the same mask used for regions
+  - `--anno_type` controls loading/typing and must be one of `track`, `stat`, `mask`, `array`
 
 ### Example
 
@@ -797,7 +800,7 @@ GenomicElementTool.py export bed6poly \
 
 ### Loading Annotations Before Export
 
-Annotations (stat or track arrays) must be created using other GenomicElementTool subcommands before exporting:
+Annotations (`track`, `stat`, `mask`, or `array`) can be created by other GenomicElementTool subcommands or loaded from existing `.npy`/single-array `.npz` files before exporting.
 
 ```bash
 # Step 1: Count signals
@@ -845,8 +848,10 @@ GenomicElementTool.py export CountTable \
 - **Region order**: All export formats preserve the order of regions as they appear in the input file
 - **Coordinate convention**: All coordinates follow BED format (0-based, half-open)
 - **Annotation arrays**: 
-  - Stat arrays must have shape `(num_regions,)`
-  - Track arrays must have shape `(num_regions, region_length)`
+  - `stat`: one value per region (commonly `(num_regions,)` or `(num_regions, 1)`)
+  - `mask`: one boolean per region (commonly `(num_regions,)` or `(num_regions, 1)`)
+  - `track`: `(num_regions, track_width)`; for non-length-homogeneous regions, `track_width` is typically `max_region_len` with zero-padding
+  - `array`: `(num_regions, ...)` with a consistent trailing shape across all regions
 - **List arguments**: When using `--append` arguments (like `--sample_name`, `--track_npy`), ensure all lists have matching lengths
 - **File formats**: 
   - Count tables are saved as CSV (comma-separated)

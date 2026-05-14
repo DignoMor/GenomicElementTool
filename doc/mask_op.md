@@ -159,7 +159,8 @@ GenomicElementTool.py mask_op opposite \
 ## Output
 
 - **Mask array file** (`.npy`)
-  - `mask` anno type for Genomic Elements
+  - `mask` annotation type for Genomic Elements
+  - Contains one boolean value per region (commonly stored as `(num_regions,)` or `(num_regions, 1)`)
 
 ## Typical Workflows
 
