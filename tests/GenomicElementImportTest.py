@@ -8,6 +8,8 @@ import numpy as np
 
 from GenomicElementImport import GenomicElementImport
 from RGTools.GenomicElements import GenomicElements
+from RGTools.ExogeneousSequences import ExogeneousSequences
+from RGTools.BedTable import BedTable3
 
 class GenomicElementImportTest(unittest.TestCase):
     def setUp(self):
@@ -143,4 +145,80 @@ class GenomicElementImportTest(unittest.TestCase):
         
         self.assertIn("Invalid output file type", str(context.exception))
 
+    def test_import_allele_expanded_es_with_stat(self):
+        fasta_path = os.path.join(self.__wdir, "allele_expanded.fa")
+        ExogeneousSequences.write_sequences_to_fasta(
+            seq_ids=[
+                "chr1_100_110_ref",
+                "chr1_100_110_105:A2G",
+                "chr1_100_110_106:A2T",
+                "chr1_200_210_ref",
+                "chr1_200_210_203:C2T",
+            ],
+            sequences=[
+                "AAAAAAAAAA",
+                "AAAAAGAAAA",
+                "AAAAATAAAA",
+                "CCCCCCCCCC",
+                "CCCTCCCCCC",
+            ],
+            fasta_path=fasta_path,
+        )
 
+        stat_path = os.path.join(self.__wdir, "signal.npy")
+        np.save(stat_path, np.asarray([1.0, 1.2, 0.4, 2.0, 2.5]))
+
+        args = argparse.Namespace(
+            inpath=fasta_path,
+            anno_oheader=os.path.join(self.__wdir, "allele_import"),
+            stat_name=["signal"],
+            stat_npy=[stat_path],
+            stat_selection_method=["max_abs_fc"],
+            informat="allele_expanded_ES",
+        )
+        GenomicElementImport.import_allele_expanded_es(args)
+
+        out_bed3 = args.anno_oheader + ".bed3"
+        out_ref = args.anno_oheader + ".signal.ref.npy"
+        out_alt = args.anno_oheader + ".signal.alt.npy"
+        self.assertTrue(os.path.exists(out_bed3))
+        self.assertTrue(os.path.exists(out_ref))
+        self.assertTrue(os.path.exists(out_alt))
+
+        out_bt = BedTable3(enable_sort=False)
+        out_bt.load_from_file(out_bed3)
+        out_regions = list(out_bt.iter_regions())
+        self.assertEqual(len(out_regions), 2)
+        self.assertEqual((out_regions[0]["chrom"], out_regions[0]["start"], out_regions[0]["end"]), ("chr1", 100, 110))
+        self.assertEqual((out_regions[1]["chrom"], out_regions[1]["start"], out_regions[1]["end"]), ("chr1", 200, 210))
+
+        ref_arr = np.load(out_ref)
+        alt_arr = np.load(out_alt)
+        self.assertEqual(ref_arr.shape, (2, 1))
+        self.assertEqual(alt_arr.shape, (2, 1))
+        self.assertAlmostEqual(ref_arr[0, 0], 1.0)
+        self.assertAlmostEqual(ref_arr[1, 0], 2.0)
+        # max_abs_fc picks 0.4 (|0.4-1.0|=0.6) over 1.2 (|1.2-1.0|=0.2)
+        self.assertAlmostEqual(alt_arr[0, 0], 0.4)
+        self.assertAlmostEqual(alt_arr[1, 0], 2.5)
+
+    def test_import_allele_expanded_es_invalid_fasta_header(self):
+        fasta_path = os.path.join(self.__wdir, "invalid.fa")
+        ExogeneousSequences.write_sequences_to_fasta(
+            seq_ids=["chr1:100-110"],
+            sequences=["AAAAAAAAAA"],
+            fasta_path=fasta_path,
+        )
+
+        args = argparse.Namespace(
+            inpath=fasta_path,
+            anno_oheader=os.path.join(self.__wdir, "invalid_import"),
+            stat_name=[],
+            stat_npy=[],
+            stat_selection_method=[],
+            informat="allele_expanded_ES",
+        )
+
+        with self.assertRaises(ValueError) as context:
+            GenomicElementImport.import_allele_expanded_es(args)
+        self.assertIn("Invalid allele_expanded_ES FASTA header", str(context.exception))
