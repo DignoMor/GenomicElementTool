@@ -17,6 +17,11 @@ class GenomicElementExport:
     def set_parser(parser):
         subparsers = parser.add_subparsers(dest="oformat")
 
+        parser_stat_list = subparsers.add_parser("stat_list",
+                                                help="Export stat annotation values as a line-based list file.",
+                                                )
+        GenomicElementExport.set_parser_stat_list(parser_stat_list)
+
         parser_exogeneous_sequences = subparsers.add_parser("ExogeneousSequences", 
                                                           help="Export exogeneous sequences.",
                                                           )
@@ -331,8 +336,41 @@ class GenomicElementExport:
         return parser
 
     @staticmethod
+    def set_parser_stat_list(parser):
+        GenomicElements.set_parser_genomic_element_region(parser)
+        parser.add_argument("--stat_npy",
+                            help="Path to the stat npy/npz file.",
+                            required=True,
+                            )
+        parser.add_argument("--opath",
+                            help="Output path of the list file.",
+                            required=True,
+                            )
+        parser.add_argument("--dtype",
+                            help="Dtype used to cast values before writing.",
+                            default="str",
+                            type=str,
+                            choices=["str", "np.int32", "np.int64", "np.float32", "np.float64"],
+                            )
+        return parser
+
+    @staticmethod
     def get_oformat_options():
-        return ["ExogeneousSequences", "WTES", "allele_expanded_ES", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE", "bed6poly"]
+        return ["stat_list", "ExogeneousSequences", "WTES", "allele_expanded_ES", "CountTable", "Heatmap", "ChromFilteredGE", "MaskedGE", "TREbed", "MergedGE", "bed6poly"]
+
+    @staticmethod
+    def export_stat_list(args):
+        ge = GenomicElements(args.region_file_path,
+                             args.region_file_type,
+                             None,
+                             )
+        ge.load_region_anno_from_npy("__stat_list__", args.stat_npy, anno_type="stat")
+        stat_arr = ge.get_stat_arr("__stat_list__").reshape(-1,)
+        stat_arr = np.asarray(stat_arr, dtype=eval(args.dtype))
+
+        with open(args.opath, "w") as f:
+            for value in stat_arr:
+                f.write(f"{value}\n")
 
     @staticmethod
     def export_exogeneous_sequences(args):
@@ -800,7 +838,9 @@ class GenomicElementExport:
 
     @staticmethod
     def main(args):
-        if args.oformat == "ExogeneousSequences":
+        if args.oformat == "stat_list":
+            GenomicElementExport.export_stat_list(args)
+        elif args.oformat == "ExogeneousSequences":
             GenomicElementExport.export_exogeneous_sequences(args)
         elif args.oformat == "WTES":
             GenomicElementExport.export_wtes(args)

@@ -104,6 +104,22 @@ class GenomicElementExportTest(unittest.TestCase):
             self.assertEqual(len(lines), 6)
             self.assertEqual(lines[1][:10], "CCCCATCCCC")
 
+    def test_export_stat_list(self):
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            stat_npy=self.__sample1_npy_path,
+            opath=os.path.join(self.__wdir, "test.stat_list.txt"),
+            dtype="np.int64",
+            oformat="stat_list",
+        )
+        GenomicElementExport.export_stat_list(args)
+
+        with open(args.opath, "r") as handle:
+            lines = [line.strip() for line in handle.readlines()]
+
+        self.assertEqual(lines, ["1", "2", "3"])
+
     def test_export_wtes(self):
         args = argparse.Namespace(
             region_file_path=self.__bed3_path,

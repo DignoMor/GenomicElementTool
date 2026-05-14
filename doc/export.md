@@ -14,6 +14,7 @@ GenomicElementTool.py export <oformat> [OPTIONS]
 ```
 
 The export subcommand supports the following output formats:
+- `stat_list`: Export one `stat` value per region to a line-based text list.
 - `ExogeneousSequences`: Export genomic sequences to Exogeneous Sequences (FASTA format).
 - `WTES`: Export genomic sequences to Wild Type ES ready for oligo library construction pipeline (FASTA format).
 - `allele_expanded_ES`: Export TRE-centered reference and SNP-mutated sequences in ExogeneousSequences format.
@@ -24,6 +25,62 @@ The export subcommand supports the following output formats:
 - `TREbed`: Annotate regions with forward and reverse TSS from GROcap/PROcap signals
 - `MergedGE`: Merge multiple Genomic Element files into one
 - `bed6poly`: Bed6 file with an extra column for polymorphism information (e.g., SNPs).
+
+## stat_list
+
+Export one value per region from a `stat` annotation array into a plain text list file (one entry per line).  
+This format is the counterpart of `import stat_list`.
+
+### Usage
+
+```bash
+GenomicElementTool.py export stat_list [OPTIONS]
+```
+
+### Required Arguments
+
+- `--region_file_path` (str)
+  - Path to the input region file (BED-like format)
+  - Required: Yes
+
+- `--region_file_type` (str)
+  - Type of the input region file
+  - Required: Yes
+
+- `--stat_npy` (str)
+  - Path to the input stat annotation file (`.npy` or single-array `.npz`)
+  - Required: Yes
+  - Must contain one value per region
+
+- `--opath` (str)
+  - Output path for the list file
+  - Required: Yes
+  - Output is plain text with one value per line
+
+### Optional Arguments
+
+- `--dtype` (str)
+  - Data type used to cast values before writing to text
+  - Default: inferred from `--stat_npy`
+  - Typical choices: `str`, `np.int32`, `np.int64`, `np.float32`, `np.float64`
+
+### Behavior
+
+- The number of values in `--stat_npy` must match the number of regions in `--region_file_path`.
+- This format exports only `stat`-type annotations (1D arrays with shape `(num_regions,)`).
+- Output preserves region order from the region file.
+- The generated list is directly compatible with:
+  - `GenomicElementTool.py import stat_list`
+
+### Example
+
+```bash
+GenomicElementTool.py export stat_list \
+  --region_file_path regions.bed3 \
+  --region_file_type bed3 \
+  --stat_npy regions.region_list.npy \
+  --opath region_labels.txt
+```
 
 ## ExogeneousSequences
 
