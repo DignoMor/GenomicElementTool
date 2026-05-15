@@ -1,5 +1,6 @@
 
 import warnings
+import sys
 
 from RGTools.GenomicElements import GenomicElements
 from RGTools.ExogeneousSequences import ExogeneousSequences
@@ -343,7 +344,7 @@ class GenomicElementExport:
                             required=True,
                             )
         parser.add_argument("--opath",
-                            help="Output path of the list file.",
+                            help='Output path of the list file. Use "-" or "stdout" to write to stdout.',
                             required=True,
                             )
         parser.add_argument("--dtype",
@@ -368,9 +369,13 @@ class GenomicElementExport:
         stat_arr = ge.get_stat_arr("__stat_list__").reshape(-1,)
         stat_arr = np.asarray(stat_arr, dtype=eval(args.dtype))
 
-        with open(args.opath, "w") as f:
+        output_handle = sys.stdout if args.opath in {"-", "stdout"} else open(args.opath, "w")
+        try:
             for value in stat_arr:
-                f.write(f"{value}\n")
+                output_handle.write(f"{value}\n")
+        finally:
+            if output_handle is not sys.stdout:
+                output_handle.close()
 
     @staticmethod
     def export_exogeneous_sequences(args):

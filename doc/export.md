@@ -56,6 +56,7 @@ GenomicElementTool.py export stat_list [OPTIONS]
   - Output path for the list file
   - Required: Yes
   - Output is plain text with one value per line
+  - Use `-` or `stdout` to write to standard output
 
 ### Optional Arguments
 

@@ -3,6 +3,8 @@ import unittest
 import argparse
 import shutil
 import os
+import io
+import contextlib
 
 import pandas as pd
 import numpy as np
@@ -119,6 +121,21 @@ class GenomicElementExportTest(unittest.TestCase):
             lines = [line.strip() for line in handle.readlines()]
 
         self.assertEqual(lines, ["1", "2", "3"])
+
+    def test_export_stat_list_stdout(self):
+        args = argparse.Namespace(
+            region_file_path=self.__bed3_path,
+            region_file_type="bed3",
+            stat_npy=self.__sample1_npy_path,
+            opath="-",
+            dtype="np.int64",
+            oformat="stat_list",
+        )
+        stdout_buffer = io.StringIO()
+        with contextlib.redirect_stdout(stdout_buffer):
+            GenomicElementExport.export_stat_list(args)
+
+        self.assertEqual(stdout_buffer.getvalue(), "1\n2\n3\n")
 
     def test_export_wtes(self):
         args = argparse.Namespace(
